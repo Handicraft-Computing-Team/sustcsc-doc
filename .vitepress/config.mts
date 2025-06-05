@@ -8,15 +8,33 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Welcome', link: '/pages/intro/welcome' },
+      { text: '基础赛道', link: '/pages/intro/basic' },
+      { text: '进阶赛道', link: '/pages/intro/advanced' }
     ],
 
     sidebar: [
       {
-        text: 'Examples',
+        text: '关于超算，你需要知道',
         items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
+          { text: '欢迎来到SUSTCSC！', link: '/pages/intro/welcome' },
+          { text: '集群使用指南', link: '/pages/intro/cluster' }
+        ]
+      },
+      {
+        text: '基础赛道',
+        items: [
+          { text: 'C/CPP编程挑战', link: '/pages/basic/c' },
+          { text: 'Rust LWE 编程挑战', link: '/pages/basic/rust' },
+          { text: 'Cloverleaf 编译优化挑战', link: '/pages/basic/cloverleaf' }
+        ]
+      },
+      {
+        text: '进阶赛道',
+        items: [
+          { text: 'GEMM编程挑战', link: '/pages/advanced/gemm' },
+          { text: 'DiT图像生成挑战', link: '/pages/advanced/dit' },
+          { text: 'WRF数值天气预报挑战', link: '/pages/advanced/wrf' }
         ]
       }
     ],
