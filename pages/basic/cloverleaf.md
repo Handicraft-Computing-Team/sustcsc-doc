@@ -10,6 +10,56 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 onMounted(() => {
+const btn = document.getElementById('read-btn')
+  if (!btn || !('speechSynthesis' in window)) {
+    btn && (btn.style.display = 'none')
+    return
+  }
+
+  const synth = window.speechSynthesis
+  let utter = null
+
+  // 把正文转成纯文本（你也可以选定更细的容器）
+  const getPageText = () => {
+    const elements = Array.from(document.querySelectorAll('.content *'))
+    const text = elements
+      .filter(el => el.childNodes.length && el.innerText.trim())
+      .map(el => el.innerText.trim())
+      .join('。')
+      .replace(/\s+/g, ' ')
+    
+    // 从"漆黑"开始的位置截取文本
+    const startIndex = text.indexOf('漆黑')
+    return startIndex >= 0 ? text.slice(startIndex) : text
+  }
+
+  const startReading = () => {
+    const text = getPageText()
+    utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'zh-CN'     // 中文
+    utter.rate = 1.8           // 语速 (0.1–10)
+    utter.pitch = 1          // 音调 (0–2)
+    synth.speak(utter)
+    btn.innerText = '⏸ 暂停'
+  }
+
+  btn.addEventListener('click', () => {
+    console.log('this:' + getPageText())
+    if (synth.speaking) {
+      if (synth.paused) {
+        synth.resume()
+        btn.innerText = '⏸ 暂停'
+      } else {
+        synth.pause()
+        btn.innerText = '▶️ 继续'
+      }
+    } else {
+      startReading()
+    }
+  })
+
+  // 页面跳转时停止朗读
+  window.addEventListener('beforeunload', () => synth.cancel())
   /* ---------- 1. 创建覆盖层和提示文字 ---------- */
   const overlay = Object.assign(document.createElement('div'), {
     style: `
@@ -23,7 +73,7 @@ onMounted(() => {
   document.body.appendChild(overlay)
   requestAnimationFrame(() => { overlay.style.opacity = 1 })
 
-  // “CloverLeaf” LOGO 文本
+  // "CloverLeaf" LOGO 文本
   const logo = Object.assign(document.createElement('div'), {
     innerHTML: '2025<span style="color:#0ff;"> SUSTCSC</span>',
     style: `
@@ -110,7 +160,7 @@ const ringMat = new THREE.MeshBasicMaterial({
   opacity: 0.6
 })
 const ring = new THREE.Mesh(ringGeo, ringMat)
-/* 让光环略微倾斜，避免正对视线变成“一条线” */
+/* 让光环略微倾斜，避免正对视线变成"一条线" */
 ring.rotation.set(Math.PI / 3, Math.PI / 6, 0)
 scene.add(ring)
 
@@ -292,6 +342,16 @@ function finalCleanup() {
 # CloverLeaf 编译优化挑战
 
 > 作者：[Charley-xiao](https://github.com/Charley-xiao)
+
+<button id="read-btn" style="
+  position:fixed;bottom:2rem;right:2rem;z-index:10001;
+  padding:.6rem 1rem;border:0;border-radius:.4rem;
+  background:#00c0ff;color:#fff;font-weight:bold;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+">
+  🔊 朗读
+</button>
+
 
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe>
 
