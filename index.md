@@ -6,7 +6,7 @@ hero:
   name: "SUSTech"
   text: "SuperComputing Competition"
   image:
-    src: /public/images/sustech.png
+    src: /images/sustech.png
     alt: SUSTech SC
   actions:
     - theme: brand
