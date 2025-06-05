@@ -26,7 +26,7 @@ export default defineConfig({
         items: [
           { text: 'C/CPP编程挑战', link: '/pages/basic/c' },
           { text: 'Rust LWE 编程挑战', link: '/pages/basic/rust' },
-          { text: 'Cloverleaf 编译优化挑战', link: '/pages/basic/cloverleaf' }
+          { text: 'CloverLeaf 编译优化挑战', link: '/pages/basic/cloverleaf' }
         ]
       },
       {
