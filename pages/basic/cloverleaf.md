@@ -79,8 +79,8 @@ const btn = document.getElementById('read-btn')
     style: `
       position:absolute;top:40%;left:50%;
       transform:translate(-50%,-50%);
-      font-family: 'Segoe UI',Helvetica,Arial,sans-serif;
-      font-size:24px;
+      font-family: 'Courier New', monospace;
+      font-size:32px;
       color: #fff;
       text-shadow:
         0 0 8px rgba(0,255,255,0.8),

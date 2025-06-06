@@ -1,29 +1,62 @@
 {
-  "hash": "6cbbbf5f",
-  "configHash": "28aa6af8",
-  "lockfileHash": "3bd80de9",
-  "browserHash": "23f00d1d",
+  "hash": "41d02db3",
+  "configHash": "e3335c99",
+  "lockfileHash": "efb831c2",
+  "browserHash": "3ae993a4",
   "optimized": {
     "vue": {
       "src": "../../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "6443a6bd",
+      "fileHash": "0e50a631",
       "needsInterop": false
     },
     "vitepress > @vue/devtools-api": {
       "src": "../../../node_modules/@vue/devtools-api/dist/index.js",
       "file": "vitepress___@vue_devtools-api.js",
-      "fileHash": "7df1eec2",
+      "fileHash": "e3d3b396",
       "needsInterop": false
     },
     "vitepress > @vueuse/core": {
       "src": "../../../node_modules/@vueuse/core/index.mjs",
       "file": "vitepress___@vueuse_core.js",
-      "fileHash": "6d7b5c7a",
+      "fileHash": "9598f0cb",
+      "needsInterop": false
+    },
+    "three": {
+      "src": "../../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "0f0fdc43",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/EffectComposer.js": {
+      "src": "../../../node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+      "file": "three_addons_postprocessing_EffectComposer__js.js",
+      "fileHash": "6608bfcf",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/RenderPass.js": {
+      "src": "../../../node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+      "file": "three_addons_postprocessing_RenderPass__js.js",
+      "fileHash": "0d62b6fc",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/UnrealBloomPass.js": {
+      "src": "../../../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+      "file": "three_addons_postprocessing_UnrealBloomPass__js.js",
+      "fileHash": "7c1e8604",
       "needsInterop": false
     }
   },
   "chunks": {
+    "chunk-EZRCSUXT": {
+      "file": "chunk-EZRCSUXT.js"
+    },
+    "chunk-SCI4M5DN": {
+      "file": "chunk-SCI4M5DN.js"
+    },
+    "chunk-7UD74Y4Z": {
+      "file": "chunk-7UD74Y4Z.js"
+    },
     "chunk-XJPKZAQV": {
       "file": "chunk-XJPKZAQV.js"
     }
