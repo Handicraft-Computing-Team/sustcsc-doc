@@ -2,7 +2,7 @@
 title: CloverLeaf 编译优化挑战
 ---
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import * as THREE from 'three'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
@@ -164,28 +164,28 @@ const ring = new THREE.Mesh(ringGeo, ringMat)
 ring.rotation.set(Math.PI / 3, Math.PI / 6, 0)
 scene.add(ring)
 
-const STAR_CNT = 2000
-  const starGeo  = new THREE.BufferGeometry()
-  const starPos  = new Float32Array(STAR_CNT * 3)
-  for (let i = 0; i < STAR_CNT; i++) {
-    // 随机撒在半径 40–60 的球壳上
-    const r   = 40 + Math.random() * 20
-    const phi = Math.acos(2 * Math.random() - 1)
-    const th  = Math.random() * 2 * Math.PI
-    starPos[i*3]     = r * Math.sin(phi) * Math.cos(th)
-    starPos[i*3 + 1] = r * Math.sin(phi) * Math.sin(th)
-    starPos[i*3 + 2] = r * Math.cos(phi)
-  }
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
-  const starMat = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.3,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 0.8
-  })
-  const stars = new THREE.Points(starGeo, starMat)
-  scene.add(stars)
+// const STAR_CNT = 2000
+//   const starGeo  = new THREE.BufferGeometry()
+//   const starPos  = new Float32Array(STAR_CNT * 3)
+//   for (let i = 0; i < STAR_CNT; i++) {
+//     // 随机撒在半径 40–60 的球壳上
+//     const r   = 40 + Math.random() * 20
+//     const phi = Math.acos(2 * Math.random() - 1)
+//     const th  = Math.random() * 2 * Math.PI
+//     starPos[i*3]     = r * Math.sin(phi) * Math.cos(th)
+//     starPos[i*3 + 1] = r * Math.sin(phi) * Math.sin(th)
+//     starPos[i*3 + 2] = r * Math.cos(phi)
+//   }
+//   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
+//   const starMat = new THREE.PointsMaterial({
+//     color: 0xffffff,
+//     size: 0.3,
+//     sizeAttenuation: true,
+//     transparent: true,
+//     opacity: 0.8
+//   })
+//   const stars = new THREE.Points(starGeo, starMat)
+//   scene.add(stars)
 
   /* ---------- 6. 粒子烟花 ---------- */
   const pTex = (() => {
@@ -200,7 +200,7 @@ const STAR_CNT = 2000
     return new THREE.CanvasTexture(cnv)
   })()
 
-  const MAX = 500
+  const MAX = 50
   const pGeo = new THREE.BufferGeometry()
   const pPos = new Float32Array(MAX * 3)
   const pVel = new Float32Array(MAX * 3)
@@ -267,15 +267,15 @@ const STAR_CNT = 2000
     // 线框颜色渐变
     const hue = (elapsed * 50) % 360
     lineMat.color.setHSL(hue / 360, 0.7, 0.5)
-
+    
     // 环形光环闪烁
     const ringOpacity = 0.3 + 0.2 * Math.sin(elapsed * 5)
     ring.material.opacity = ringOpacity
     ring.rotation.z += 0.01
-
+    
     // 文本脉动
     txtSprite.material.opacity = 0.7 + 0.3 * Math.sin(elapsed * 4)
-
+    
     // 粒子更新
     const dtFixed = 0.016
     for (let i = 0; i < MAX; i++) {
@@ -285,13 +285,13 @@ const STAR_CNT = 2000
       pPos[iz]   += pVel[iz]   * dtFixed
     }
     pGeo.attributes.position.needsUpdate = true
-
+    
     burstTimer += dtFixed
     if (burstTimer > 10) {
       burstTimer = 0
       emitBurst()
     }
-
+    
     composer.render(dt)
   }
   animate()
@@ -335,6 +335,62 @@ function finalCleanup() {
   }
   window.addEventListener('resize', onResize)
 })
+
+
+/* ================== 终幕交互：state & 方法 ================== */
+import { computed } from 'vue'
+
+/* —— 1. 终幕全文 —— */
+const endXRaw = `无星的远古夜，尘灰覆盖一座断顶石塔。
+塔内微火摇曳，守火的少女静坐如影，只记得一句誓言：
+“火在，天光可至。”
+
+忽有一瓣晶莹绿叶自黑暗飘落，轻触火舌。
+火光骤亮，一线幽蓝破墙而出，直指苍穹。
+少女将叶托回火心，轻声呢喃——音轻如祷。
+
+火回应祷词，化作光廊，穿透无尽黑夜。
+少女含笑阖眼，任身影随风淡去。
+而那片叶子，已在火中生根，等待下一个行路人。`.trim()
+
+/* —— 2. 响应式变量 —— */
+const endXShow  = ref(false)          // 蒙版显隐
+const endXDone  = ref(false)          // 是否已播完
+const endXIdx   = ref(0)              // 当前渲染到第几字符
+let   endXTmr : number                // 定时器
+
+/* —— 3. 计算属性 —— */
+const endXFullText     = endXRaw.replace(/\r/g,'')
+const endXVisibleText  = computed(() => endXFullText.slice(0,endXIdx.value))
+const endXVisibleLines = computed(() => endXVisibleText.value.split('\n'))
+
+/* —— 4. 触发 & 点击逻辑 —— */
+function endXLaunch(){
+  if(endXShow.value) return
+  endXShow.value = true
+  endXDone.value = false
+  endXIdx.value  = 0
+  endXTmr = window.setInterval(()=>{
+    if(endXIdx.value >= endXFullText.length){
+      window.clearInterval(endXTmr)
+      endXDone.value = true
+    }else{
+      endXIdx.value += 2        // 速度：一次 2 字
+    }
+  },100)                         // 间隔：40 ms
+}
+function endXHandleClick(){
+  if(!endXDone.value){
+    window.clearInterval(endXTmr)
+    endXIdx.value = endXFullText.length
+    endXDone.value = true
+  }else{
+    endXShow.value = false
+  }
+}
+/* ================== 终幕交互 end ================== */
+
+
 </script>
 
 <ClientOnly />
@@ -861,10 +917,67 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 留在这里，则说明未来已不需要再被拯救。
 
-无论哪一种，都值得他们奔赴。
+无论哪一种，都值得他奔赴。
 
 ## 说明与致谢
 
 本赛题为南方科技大学 2025 年超算比赛基础赛道编译优化赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。同时，[GitHub 仓库](https://github.com/Charley-xiao/tempestissimo) 已开放讨论区，欢迎大家在此讨论与交流。如有任何问题，请提出 issue 或联系 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 出题人：[Charley-xiao](https://github.com/Charley-xiao).
 
 <img src="/images/hikari.png" />
+
+<!-- --- 终幕按钮 & 全屏蒙版 --- -->
+<ClientOnly>
+<div id="endX-root">
+  <button class="endX-btn" @click="endXLaunch">
+    点亮命运的灯塔
+  </button>
+
+  <transition name="endX-fade">
+    <div v-if="endXShow" class="endX-overlay" @click="endXHandleClick">
+      <div class="endX-box">
+        <p v-for="l in endXVisibleLines">{{ l }}</p>
+      </div>
+    </div>
+  </transition>
+</div>
+
+<style scoped>
+/* 按钮 */
+.endX-btn{
+  display:block;margin:4rem auto 3rem;padding:1rem 2.8rem;
+  font-size:1.2rem;font-weight:600;color:#fff;background:#ff7a18;
+  border:none;border-radius:9999px;cursor:pointer;user-select:none;
+  animation:endXGlow 2s ease-in-out infinite,endXPulse 3s linear infinite;
+}
+@keyframes endXGlow{
+  0%,100%{box-shadow:0 0 10px #ff7a18,0 0 20px #ffa84d}
+  50%    {box-shadow:0 0 20px #ffeaa7,0 0 40px #ffd35b}
+}
+@keyframes endXPulse{
+  0%,100%{transform:scale(1)}50%{transform:scale(1.06)}
+}
+
+/* 淡入淡出 */
+.endX-fade-enter-active,.endX-fade-leave-active{transition:opacity .6s}
+.endX-fade-enter-from,.endX-fade-leave-to{opacity:0}
+
+/* 蒙版 */
+.endX-overlay{
+  position:fixed;inset:0;z-index:12000;
+  background:url('/images/ending-bg.jpg') center/cover no-repeat,#000;
+  background-blend-mode:multiply;
+  display:flex;justify-content:center;align-items:center;
+  cursor:pointer;overflow-y:auto;
+}
+
+/* 文字盒 */
+.endX-box{
+  max-width:820px;padding:2.5rem 3rem;border-radius:8px;
+  background:rgba(0,0,0,.55);color:#eee;font-size:1.05rem;
+  line-height:1.7;white-space:pre-wrap;user-select:none;
+}
+@media(max-width:600px){
+  .endX-box{padding:1.6rem 1.2rem;font-size:.95rem}
+}
+</style>
+</ClientOnly>
