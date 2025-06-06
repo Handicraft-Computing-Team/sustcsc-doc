@@ -120,14 +120,19 @@ onMounted(() => {
     drops.fill(1)
   })
 
-  // Close overlay on click
+  // Close overlay function
   const closeOverlay = () => {
+    if (!running) return // Prevent multiple closings
     running = false
     overlay.style.opacity = 0
     setTimeout(() => overlay.remove(), 1200)
   }
 
+  // Close on click
   overlay.addEventListener('click', closeOverlay)
+  
+  // Auto close after 6 seconds
+  setTimeout(closeOverlay, 6000)
 })
 </script>
 
@@ -190,8 +195,6 @@ $$
 （没错，连出题人都不知道答案，这下公平了吧！😏）
 
 我们为你准备了从"新手村"到"地狱难度"的各种挑战，就看你能闯到第几关了！ 💪
-
-
 
 ## 江湖规矩
 
