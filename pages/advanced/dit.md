@@ -5,220 +5,154 @@ title: DiT 图像生成挑战
 <script setup>
 import { onMounted, ref } from 'vue'
 import * as THREE from 'three'
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 onMounted(() => {
-  /* ---------- 1. 创建覆盖层和提示文字 ---------- */
+  // --- DOM 创建逻辑（保持不变） ---
   const overlay = Object.assign(document.createElement('div'), {
-    style: `
-      position:fixed;inset:0;z-index:9999;
-      pointer-events:auto;
-      background:transparent;
-      opacity:0;
-      transition:opacity 1.2s ease;
-    `
+    style: `position:fixed;inset:0;z-index:9999;pointer-events:auto;background:transparent;opacity:0;transition:opacity 1.2s ease;`
   })
   document.body.appendChild(overlay)
   requestAnimationFrame(() => { overlay.style.opacity = 1 })
 
-  // "DiT" LOGO 文本
   const logo = Object.assign(document.createElement('div'), {
-    innerHTML: '2025<span style="color:#0ff;"> SUSTCSC</span>',
-    style: `
-      position:absolute;top:40%;left:50%;
-      transform:translate(-50%,-50%);
-      font-family: 'Segoe UI',Helvetica,Arial,sans-serif;
-      font-size:24px;
-      color: #fff;
-      text-shadow:
-        0 0 8px rgba(0,255,255,0.8),
-        0 0 16px rgba(0,255,255,0.6),
-        0 0 24px rgba(255,255,255,0.4);
-      pointer-events:none;
-      z-index:10000;
-    `
+    innerHTML: '2025 SUSTCSC <span style="color:#ffd700;"> DiT </span>',
+    style: `position:absolute;
+    top:40%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Courier New',monospace;
+    font-size:24px;
+    color:#fff;
+    text-shadow: 0 0 8px rgba(255,215,0,0.8),
+                 0 0 16px rgba(255,215,0,0.6),
+                 0 0 24px rgba(255,255,200,0.4);
+    pointer-events:none;
+    z-index:10000;`
   })
   overlay.appendChild(logo)
 
-  // 点击提示
   const prompt = Object.assign(document.createElement('div'), {
     innerText: '点击任意处继续',
-    style: `
-      position:absolute;top:60%;left:50%;
-      transform:translate(-50%,-50%);
-      font-size:24px;
-      color:#0ff;
-      text-shadow:0 0 6px rgba(0,255,255,0.7);
-      pointer-events:none;
-      z-index:10000;
-    `
+    style: `position:absolute;
+    top:60%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:24px;
+    color: #ffd700;
+    text-shadow: 0 0 6px rgba(255,215,0,0.7);
+    pointer-events:none;z-index:10000;`
   })
   overlay.appendChild(prompt)
 
-  /* ---------- 2. Three.js 场景 ---------- */
+  // --- Three.js 初始化 ---
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000)
-  camera.position.set(0, 0, 6)
+  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000)
+  camera.position.z = 0
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
   renderer.setPixelRatio(devicePixelRatio)
   renderer.setSize(innerWidth, innerHeight)
-  renderer.setClearColor(0x000000, 0)
+  renderer.setClearColor(0x000000, 1)
   overlay.appendChild(renderer.domElement)
 
-  /* ---------- 3. 后期效果：Bloom ---------- */
-  const composer = new EffectComposer(renderer)
-  composer.addPass(new RenderPass(scene, camera))
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.5, 0.4, 0.1)
-  bloomPass.threshold = 0
-  bloomPass.strength = 1.2
-  bloomPass.radius = 0.6
-  composer.addPass(bloomPass)
+  // --- 粒子隧道 ---
+  const SEGMENTS = 10000
+  const TUNNEL_RADIUS = 15.0
+  const TUNNEL_LENGTH = 500
 
-  /* ---------- 4. 创建噪声纹理和目标图像 ---------- */
-  const createNoiseTexture = (size) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = canvas.height = size
-    const ctx = canvas.getContext('2d')
-    const imageData = ctx.createImageData(size, size)
-    const data = imageData.data
-    for (let i = 0; i < data.length; i += 4) {
-      const value = Math.random() * 255
-      data[i] = value
-      data[i + 1] = value
-      data[i + 2] = value
-      data[i + 3] = 255
-    }
-    ctx.putImageData(imageData, 0, 0)
-    return new THREE.CanvasTexture(canvas)
+  const geometry = new THREE.BufferGeometry()
+  const positions = new Float32Array(SEGMENTS * 3)
+  const colors = new Float32Array(SEGMENTS * 3)
+  const sizes = new Float32Array(SEGMENTS)
+
+  for (let i = 0; i < SEGMENTS; i++) {
+    const t = i / SEGMENTS * TUNNEL_LENGTH
+    const angle = t * 10 + Math.sin(t * 0.8) * 0.7
+    const r = TUNNEL_RADIUS + Math.sin(t * 2.5) * 0.5 + Math.cos(t * 1.8) * 0.3
+
+    positions[i * 3] = Math.cos(angle) * r
+    positions[i * 3 + 1] = Math.sin(angle) * r
+    positions[i * 3 + 2] = -t
+
+    colors[i * 3] = 0.5 + 0.5 * Math.sin(t * 0.2 + 0.0)
+    colors[i * 3 + 1] = 0.5 + 0.5 * Math.sin(t * 0.2 + 2.0)
+    colors[i * 3 + 2] = 0.5 + 0.5 * Math.sin(t * 0.2 + 4.0)
+
+    sizes[i] = 0.2 + 0.15 * Math.sin(t * 5)
   }
 
-  const noiseTexture = createNoiseTexture(256)
-  const textureLoader = new THREE.TextureLoader()
-  const targetTexture = textureLoader.load('/sustcsc-doc/images/sustech.png')
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
 
-  /* ---------- 5. 创建混合材质 ---------- */
-  const planeGeometry = new THREE.PlaneGeometry(4, 4)
-  const planeMaterial = new THREE.ShaderMaterial({
+  const material = new THREE.ShaderMaterial({
     uniforms: {
-      noiseTexture: { value: noiseTexture },
-      targetTexture: { value: targetTexture },
-      mixFactor: { value: 0.0 },
-      time: { value: 0.0 }
+      color: { value: new THREE.Color(0xffffff) },
+      // Optional: A soft circular texture for points
+      // pointTexture: { value: new THREE.TextureLoader().load('/path/to/sparkle.png') }
     },
     vertexShader: `
-      varying vec2 vUv;
+      attribute float size;
+      attribute vec3 color;
+      varying vec3 vColor;
       void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vColor = color;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (300.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
       }
     `,
     fragmentShader: `
-      uniform sampler2D noiseTexture;
-      uniform sampler2D targetTexture;
-      uniform float mixFactor;
-      uniform float time;
-      varying vec2 vUv;
-      
+      varying vec3 vColor;
+      // uniform sampler2D pointTexture; // Uncomment if using texture
       void main() {
-        vec4 noise = texture2D(noiseTexture, vUv);
-        vec4 target = texture2D(targetTexture, vUv);
-        
-        // 创建白色背景
-        vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
-        
-        // 添加一些动态效果
-        float pulse = sin(time * 2.0) * 0.5 + 0.5;
-        float finalMix = mixFactor * (1.0 + pulse * 0.1);
-        
-        // 先从白色过渡到噪声，再从噪声过渡到目标图像
-        vec4 intermediate = mix(white, noise, finalMix * 0.5);
-        gl_FragColor = mix(intermediate, target, finalMix);
+        gl_FragColor = vec4(vColor, 1.0);
+        float r = distance(gl_PointCoord, vec2(0.5, 0.5));
+        if (r > 0.5) discard;
+        gl_FragColor = gl_FragColor * (1.0 - smoothstep(0.3, 0.5, r));
+        // If you have a texture, uncomment the line below and comment the above two lines
+        // gl_FragColor = gl_FragColor * texture2D(pointTexture, gl_PointCoord);
       }
     `,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
     transparent: true
   })
-  const plane = new THREE.Mesh(planeGeometry, planeMaterial)
-  scene.add(plane)
 
-  /* ---------- 6. 创建粒子系统 ---------- */
-  const PARTICLE_COUNT = 1000
-  const particleGeometry = new THREE.BufferGeometry()
-  const positions = new Float32Array(PARTICLE_COUNT * 3)
-  const colors = new Float32Array(PARTICLE_COUNT * 3)
+  const points = new THREE.Points(geometry, material)
+  scene.add(points)
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 5
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 5
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 5
+  // Fog effect for enhanced depth
+  scene.fog = new THREE.FogExp2(0x000000, 0.01) // Slightly less dense fog for a softer fade
 
-    colors[i * 3] = Math.random()
-    colors[i * 3 + 1] = Math.random()
-    colors[i * 3 + 2] = Math.random()
-  }
-
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-  const particleMaterial = new THREE.PointsMaterial({
-    size: 0.05,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.8
-  })
-
-  const particles = new THREE.Points(particleGeometry, particleMaterial)
-  scene.add(particles)
-
-  /* ---------- 7. 动画循环 ---------- */
+  // --- Animation loop ---
   let frameId, elapsed = 0
-  const animate = (dt = 0) => {
+  const animate = (time) => {
     frameId = requestAnimationFrame(animate)
-    elapsed += dt * 0.001
+    elapsed = time * 0.001
 
-    // 更新混合因子
-    const mixFactor = Math.min(1.0, Math.max(0.0, (elapsed - 5.0) * 0.5))
-    planeMaterial.uniforms.mixFactor.value = mixFactor
-    planeMaterial.uniforms.time.value = elapsed
+    // 让粒子系统整体围绕z轴旋转
+    points.rotation.z = elapsed * 0.5
 
-    // 更新噪声纹理
-    const ctx = noiseTexture.image.getContext('2d')
-    const imageData = ctx.getImageData(0, 0, 256, 256)
-    const data = imageData.data
-    for (let i = 0; i < data.length; i += 4) {
-      const value = Math.sin(elapsed * 2 + i * 0.01) * 127 + 128
-      data[i] = value
-      data[i + 1] = value
-      data[i + 2] = value
-    }
-    ctx.putImageData(imageData, 0, 0)
-    noiseTexture.needsUpdate = true
+    // 摄像机始终在隧道中心，沿z轴前进
+    const tunnelProgress = (elapsed * 6) % TUNNEL_LENGTH
+    camera.position.set(0, 0, tunnelProgress)
+    camera.lookAt(0, 0, tunnelProgress - 10)
 
-    // 更新粒子位置
-    const positions = particles.geometry.attributes.position.array
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i] += Math.sin(elapsed + i) * 0.01
-      positions[i + 1] += Math.cos(elapsed + i) * 0.01
-      positions[i + 2] += Math.sin(elapsed * 0.5 + i) * 0.01
-    }
-    particles.geometry.attributes.position.needsUpdate = true
+    // 可以加一点轻微的上下/左右漂移增强动感
+    camera.position.x = Math.sin(elapsed * 0.7) * 0.2
+    camera.position.y = Math.cos(elapsed * 0.5) * 0.2
+    camera.position.z = - (elapsed * 6) % TUNNEL_LENGTH
 
-    // 旋转平面，使用平滑的减速曲线
-    const rotationSpeed = Math.max(0, 0.2 * Math.pow(1 - mixFactor, 2))
-    plane.rotation.z += rotationSpeed * (dt * 0.001)
-
-    composer.render(dt)
+    renderer.render(scene, camera)
   }
-  animate()
+  animate(0)
 
-  /* ---------- 8. 点击或超时结束动画 ---------- */
+  // --- End logic ---
   function triggerFadeOut() {
     overlay.style.opacity = 0
     setTimeout(finalCleanup, 1200)
   }
-
   function finalCleanup() {
     cancelAnimationFrame(frameId)
     renderer.dispose()
@@ -227,22 +161,19 @@ onMounted(() => {
     window.removeEventListener('click', triggerFadeOut)
   }
 
-  // 8 秒后自动结束并淡出
   setTimeout(triggerFadeOut, 8000)
-
-  // 监听点击立即结束
   window.addEventListener('click', triggerFadeOut)
 
-  /* ---------- 9. 响应式重置 ---------- */
+  // --- Viewport responsiveness ---
   function onResize() {
     camera.aspect = innerWidth / innerHeight
     camera.updateProjectionMatrix()
     renderer.setSize(innerWidth, innerHeight)
-    bloomPass.setSize(innerWidth, innerHeight)
   }
   window.addEventListener('resize', onResize)
 })
 </script>
+
 
 <ClientOnly />
 
@@ -250,16 +181,6 @@ onMounted(() => {
 
 > 作者：[Jaredan Xiao](https://github.com/Jaredanwolfgang)
 
-<button id="read-btn" style="
-  position:fixed;bottom:2rem;right:2rem;z-index:10001;
-  padding:.6rem 1rem;border:0;border-radius:.4rem;
-  background:#00c0ff;color:#fff;font-weight:bold;cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);
-">
-  🔊 朗读
-</button>
-
-<!-- <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe> -->
 
 [[toc]]
 
