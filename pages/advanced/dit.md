@@ -2,7 +2,7 @@
 title: DiT 图像生成挑战
 ---
 
-<!-- <script setup>
+<script setup>
 import { onMounted, ref } from 'vue'
 import * as THREE from 'three'
 
@@ -174,7 +174,7 @@ onMounted(() => {
 })
 </script>
 
-<ClientOnly /> -->
+<ClientOnly />
 
 # DiT 图像生成挑战
 
@@ -332,27 +332,71 @@ DiT在针对问题上，做出了几项比较重要的改进，才得以在扩�
 
 ## 题目说明
 
-### 规则
+### 竞赛规则
+
+1. **目标任务**  
+   请帮助 Gwen 和 Peter 优化并加速 DiT 模型的推理速度。你需要针对 DiT 模型的 Transformer 结构，设计并实现高效的推理优化方案。赛题代码仓库：[https://github.com/Jaredanwolfgang/DiT-SUSTCSC](https://github.com/Jaredanwolfgang/DiT-SUSTCSC)
+
+2. **代码规范**  
+   - 仅允许在指定的代码区域进行优化，禁止修改评测相关的计时代码及其与其他函数的相对位置。
+   - 代码需保证可读性和可维护性，建议添加必要的注释说明优化思路。
+   - 禁止输出固定或随机答案，禁止调用外部程序（如需特殊依赖请在说明文档中注明）。
+
+3. **硬件与环境**  
+   - 所有评测将在指定的集群环境和硬件平台上进行，具体配置以组委会通知为准。
+   - 允许自定义环境配置（如 Dockerfile），但需保证可复现性。
+
+4. **评测与验证**  
+   - 所有优化方案需通过组委会提供的正确性验证脚本，确保推理结果的准确性。
+   - 未通过正确性验证的方案，其性能得分计为 0 分。
+   - 组委会有权要求参赛队伍进一步解释优化方案，并在不同参数或硬件下复测。
+
+5. **公平性与诚信**  
+   - 禁止抄袭、恶意利用漏洞、篡改评测流程等行为。
+   - 参赛作品须为原创，若借鉴公开资料或第三方库，需在报告中注明来源。
 
 ### 提交指南
 
+请按如下要求提交你的成果：
+
+1. **提交内容** 
+   - **代码文件**：包含所有实现优化的源代码，结构清晰，便于评测。
+   - **运行说明文档**：详细说明环境配置、依赖安装、编译与运行步骤，确保他人可顺利复现你的结果。
+   - **优化报告**：内容包括但不限于：
+     - 单卡 Baseline 结果
+     - 单卡 Profile 结果及性能瓶颈分析
+     - 单卡优化方案与结果（如更换更快的矩阵计算库、重叠通信流等）
+     - 多卡方案设计（基于 Ultra-Scale PlayBook，分析适合 DiT 的并行策略）
+     - 多卡优化结果（使用数据并行/模型并行/序列并行等方式）
+     - 关键优化点、创新性说明、遇到的问题与解决方法
+   - **结果文件**：需包含与报告第三部分和第五部分对应的实验结果数据或日志。
+2. **报告评分标准** 
+
+| 内容                                                         | 比例   |
+|------------------------------------------------------------|-------|
+| 1. 单卡 Baseline 结果                                      | 10%   |
+| 2. 单卡 Profile 结果，并分析性能瓶颈                       | 15%   |
+| 3. 单卡优化结果（更换更快的矩阵计算库、重叠通信流等方式）   | 25%   |
+| 4. 多卡方案设计（阅读 Ultra-Scale PlayBook，分析适合的并行策略） | 20%   |
+| 5. 多卡优化结果（使用数据并行/模型并行/序列并行等方式）     | 30%   |
+3. **提交方式**
+   - 请将所有提交内容整理为一个压缩包，命名格式为 `teamid_DiT.tar.gz`。
+   - 邮件发送至指定邮箱：`xiaoyc2022@mail.sustech.edu.cn`，邮件标题请以以下格式提交`[SUSTCSC-TeamID] DiT挑战赛提交`。
+   - 截止时间及评测安排以官方通知为准，逾期提交不予评测。
+
 ## 说明与致谢
+
+本赛题为南方科技大学 2025 年超算比赛进阶赛道DiT图像生成挑战赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。同时，[GitHub 仓库](https://github.com/Jaredanwolfgang/DiT-SUSTCSC/issues) 已开放讨论区，欢迎大家在此讨论与交流。如有任何问题，请提出 issue 或联系 [xiaoyc2022@mail.sustech.edu.cn](mailto:xiaoyc2022@mail.sustech.edu.cn). 出题人：[Jaredan Xiao](https://github.com/Jaredanwolfgang).
 
 ### 参考资料
 
 1. [扩散模型U-Net可视化理解](https://blog.csdn.net/weixin_43325228/article/details/135223972)
 2. [Diffusion模型为何倾向于钟爱U-net结构？](https://blog.csdn.net/KdpdCode/article/details/133155913)
 3. [扩散模型(Diffusion Model)详解：直观理解、数学原理、PyTorch 实现](https://zhouyifan.net/2023/07/07/20230330-diffusion-model/)
-
-<!-- 教程主要内容：
-1. 故事
-2. 介绍Diffusion模型（DDPM和DDIM的数学原理简介）
-3. 介绍并行方案和模式
-4. 环境配置 + Profile模型主要使用策略
-
-报告主要内容：
-1. 单卡Baseline结果 10%
-2. 单卡Profile结果 并分析性能瓶颈 15%
-3. 单卡优化结果（更换更快的矩阵计算库、重叠通信流等方式）25%
-4. 多卡方案设计（阅读Ultra-Scale PlayBook了解有什么并行策略，分析在DiT模型中最适合使用的模型并行策略有什么）20%
-5. 多卡优化结果（使用数据并行/模型并行/序列并行等方式对DiT推理过程进行优化）30% -->
+4. Peebles, W., & Xie, S. (2023). Scalable Diffusion Models with Transformers (No. arXiv:2212.09748). arXiv. https://doi.org/10.48550/arXiv.2212.09748
+5. Fang, J., & Zhao, S. (2024). USP: A Unified Sequence Parallelism Approach for Long Context Generative AI (No. arXiv:2405.07719). arXiv. https://doi.org/10.48550/arXiv.2405.07719
+6. Wang, J., Fang, J., Li, A., & Yang, P. (2024). PipeFusion: Displaced Patch Pipeline Parallelism for Inference of Diffusion Transformer Models (No. arXiv:2405.14430). arXiv. https://doi.org/10.48550/arXiv.2405.14430
+7. Ho, J., Jain, A., & Abbeel, P. (2020). Denoising Diffusion Probabilistic Models (No. arXiv:2006.11239). arXiv. http://arxiv.org/abs/2006.11239
+8. Huang, Y., Cheng, Y., Bapna, A., Firat, O., Chen, D., Chen, M., Lee, H., Ngiam, J., Le, Q. V., Wu, Y., & Chen,  zhifeng. (2019). GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism. Advances in Neural Information Processing Systems, 32. https://proceedings.neurips.cc/paper/2019/hash/093f65e080a295f8076b1c5722a46aa2-Abstract.html
+9. Li, S., Xue, F., Baranwal, C., Li, Y., & You, Y. (2022). Sequence Parallelism: Long Sequence Training from System Perspective (No. arXiv:2105.13120). arXiv. http://arxiv.org/abs/2105.13120
+10. Narayanan, D., Shoeybi, M., Casper, J., LeGresley, P., Patwary, M., Korthikanti, V., Vainbrand, D., Kashinkunti, P., Bernauer, J., Catanzaro, B., Phanishayee, A., & Zaharia, M. (2021). Efficient large-scale language model training on GPU clusters using megatron-LM. Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis, 1–15. https://doi.org/10.1145/3458817.3476209
