@@ -6,7 +6,6 @@ title: Rust 编译优化挑战
 import { onMounted, ref } from 'vue'
 
 onMounted(() => {
-  /* ---------- 1. 创建覆盖层和提示文字 ---------- */
   const overlay = Object.assign(document.createElement('div'), {
     style: `
       position: fixed;
@@ -187,27 +186,22 @@ $$
 
 我们为你准备了从"新手村"到"地狱难度"的各种挑战，就看你能闯到第几关了！ 💪
 
-## 来玩，来，来 🎮
-
-### 作战地图 🗺️
-在这个[挑战仓库](https://github.com/chanbengz/sustcsc-rs)里藏着：
-- **[启动包](https://github.com/chanbengz/sustcsc-rs/tree/main/challenge)**：内附 LWE 挑战和示例 BKW 破解器
-- **[任务手册](https://github.com/chanbengz/sustcsc-rs/tree/main/handout)**：CI/CD 自动用 `mdbook` 构建的秘籍，[点此直达](https://sustcsc25.benx.dev)
+## 来玩，来，来 🎮 <Badge type="tip"><a href="https://github.com/chanbengz/sustcsc-rs" style="text-decoration: none; color: black;">Github Repo</a></Badge>
 
 ### 终极目标 🎯
 你的黑客任务：用 Rust 打造一个 LWE 破解器！量子怪兽正在逼近，加密系统的命运就靠你了！
 
 作战指标：
 - ⏱️ 必须在 $T$ 时间内破解 LWE 谜题（超时=GG）
-- 🎯 必须 100% 精确命中 $\mathbf{s}$（误差=0）
+- 🎯 必须 100% 精确命中 $\mathbf{s}$ 或者 $\mathbf{A} * \mathbf{s}$ (误差=0)
 - 🚀 时间就是分数！解得越快分越高
 
 ```rust
 pub(crate) fn solve_lwe(
-    n: usize,   // 维度，迷宫复杂度
-    m: usize,   // 方程数，迷宫长度
-    q: u64,     // 模数，迷宫边界
-    alpha: f64, // 噪声系数，迷宫干扰强度
+    n: usize,        // 维度，迷宫复杂度
+    m: usize,        // 方程数，迷宫长度
+    q: u64,          // 模数，迷宫边界
+    alpha: f64,      // 噪声系数，迷宫干扰强度
     a: &Array2<u64>, // 迷宫地图 A
     b: &Array1<u64>, // 出口标记 b
 ) -> Array1<u64> {
@@ -217,7 +211,7 @@ pub(crate) fn solve_lwe(
 ```
 
 你可以选择：
-1. 调教现成的 BKW 破解器 🔧
+1. 调教现成的破解器 🔧
 2. 自创全新破解算法 🧠
 （双修的大佬直接封神！👑）
 
@@ -317,6 +311,8 @@ $$
 [Rust速成营](https://sustcsc25.benx.dev/rustup/00-first-look.html)
 
 ### 参考秘籍 📚
-- 《CPU上的Rust数值计算宝典》  
-- 达姆施塔特大学《LWE挑战》  
-- 《LWE攻防全解》
+- [《CPU上的Rust数值计算宝典》](https://plmlab.math.cnrs.fr/grasland/numerical-rust-cpu)
+- [达姆施塔特大学《LWE挑战》](https://www.latticechallenge.org/lwe_challenge/challenge.php)
+- [《LWE攻防全解》](https://www.maths.ox.ac.uk/system/files/attachments/lattice-reduction-and-attacks.pdf)
+
+本文案由ChatGPT/Deepseek生成，如有雷同纯属巧合。
