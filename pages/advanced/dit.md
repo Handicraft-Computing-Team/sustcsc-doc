@@ -2,7 +2,7 @@
 title: DiT 图像生成挑战
 ---
 
-<script setup>
+<!-- <script setup>
 import { onMounted, ref } from 'vue'
 import * as THREE from 'three'
 
@@ -174,7 +174,7 @@ onMounted(() => {
 })
 </script>
 
-<ClientOnly />
+<ClientOnly /> -->
 
 # DiT 图像生成挑战
 
@@ -253,13 +253,76 @@ $$
 
 ### Scalable Diffusion Models with Transformers <Badge type="tip"><a href="https://github.com/facebookresearch/DiT" style="text-decoration: none; color: black;">Github Repo</a></Badge> <Badge type="danger"><a href="https://arxiv.org/abs/2212.09748" style="text-decoration: none; color: inherit;">Paper</a></Badge> 
 
-在DiT以前，Diffusion模型主要使用UNet结构作为主干网络，在图像生成任务上取得了很大的进展，使用UNet作为主干网络的特点在于其包含一个下采样路径和一个对应的上采样路径，这种结构使得UNet在处理图像的时候可以更好地捕捉上下文信息、更有效地传递特征，并且改善梯度传递的速度。
+在DiT以前，Diffusion模型主要使用U-Net结构作为主干网络，在图像生成任务上取得了很大的进展，使用U-Net作为主干网络的特点在于其包含一个下采样路径和一个对应的上采样路径，这种结构使得UNet在处理图像的时候可以更好地捕捉上下文信息、更有效地传递特征，并且改善梯度传递的速度。
 
 ![Unet网络](/dit/unet.png)
 
+在著名的[Transformer论文](https://arxiv.org/abs/1706.03762)发表后， 很多常见的任务都从卷积神经网络（CNN）、残差神经网络（RNN）等慢慢被Transformer结构为主的神经网络替代，比较有名的就是[Vision Transformer](https://arxiv.org/abs/2010.11929)（ViT）。而在扩散模型中，一直没有很有效的基于Transformer模型的结构被提出，直到「Scalable Diffusion Models with Transformers」一文的出现。原因在于，最初的扩散模型都是针对图像的像素空间进行操作，像素空间具有非常强的空间局部性特征，卷积网络天然针对该任务有天然的适配性。Transformer结构的计算复杂度虽然是 $O(n^2)$ 的数量级，但是在针对图像这类问题的处理上，计算复杂度会随着图片的分辨率呈指数上升。（比如在针对 $512 \times 512$ 的任务上，可能会有接近上万大小的Tokens）
+
+DiT在针对问题上，做出了几项比较重要的改进，才得以在扩散模型中引入Transformer模型为架构的神经网络：
+1. **Patchify 输入**  
+   DiT 首先将输入图像分割为一系列 patch（类似 ViT），每个 patch 被展平成一个 token，输入到 Transformer 中。这种方式极大降低了 token 数量，使 Transformer 能够处理高分辨率图像。
+
+2. **位置编码与时间步嵌入**  
+   除了常规的二维位置编码，DiT 还将扩散过程中的时间步（timestep）信息通过嵌入方式加入到每个 patch token 中，使模型能够感知当前的去噪阶段。
+
+3. **高效的归一化与初始化策略**  
+   DiT 针对扩散模型的训练特点，采用了 LayerNorm、权重初始化等一系列优化策略，提升了训练稳定性和收敛速度。
+  
+4. **基于潜空间的建模**  
+   与传统的扩散模型直接在像素空间进行噪声添加和去噪不同，DiT 支持在潜空间（Latent Space）中进行扩散过程。具体来说，原始高维图像会先通过编码器（如 VAE 或其他降维网络）映射到一个更低维、更紧凑的潜在表示空间。扩散和去噪过程都在这个潜空间中进行，最后再通过解码器还原为高分辨率图像。
+
+基于这几个优化之上，DiT得以利用上Transformer结构的优势来完成扩散的任务。
 ![DiT](/dit/dit.png)
+文章探索了多种Transformer结构的网络模型，如果感兴趣，可以从标题中的链接去阅读论文和代码。
 
 ## 有关分布式推理
+
+在此次DiT图像生成挑战中，我们主要将针对DiT模型中的Transformer结构进行优化，利用多卡加速推理过程中的Transformer结构的计算。下面的内容将会对语言模型中的常见分布式并行策略进行简要的介绍，需要提醒的是，在针对扩散模型的任务中，不一定每一个并行策略都会有很好的效果，选择合适的并行策略往往比盲目尝试更难实现的策略会带来更好的加速效果。
+
+### 数据并行 (Data Parallelism)
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <div style="flex: 1; text-align: center;">
+    <img src="/dit/data_para.png" style="display: block; margin: 0 auto; width: 100%; max-width: 320px;" />
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="/dit/ddp.png" style="display: block; margin: 0 auto; width: 100%; max-width: 320px;" />
+  </div>
+</div>
+
+数据并行是一种将大型数据集分割到多个计算节点（如GPU）上进行并行处理的方法。每个节点保存完整的模型副本，独立处理分配给它的数据子集，并在训练过程中同步更新梯度。现代实现通常使用高效的All-reduce通信（如NVIDIA的NCCL库）来聚合梯度，替代传统的参数服务器方法，从而减少通信开销并提升效率。数据并行的核心优势是能够显著加速大规模数据集的训练，但需要确保梯度同步的高效性。
+
+### 模型并行 (Model Parallelism)
+
+模型并行通过将模型本身分割到不同设备上来解决单个设备内存不足的问题，主要包括以下两种方式：
+
+1. **流水线并行 (Pipeline Parallelism)**  
+   将模型按层水平分割，不同设备负责不同的层。通过将输入数据分成微批次（micro-batches）并重叠计算与通信，减少设备间的“气泡”（空闲时间）。
+   ![Pipeline Parallelism](/dit/pipeline_para.png)
+   例如，[GPipe](https://arxiv.org/abs/1811.06965)框架通过这种方式实现了高效的分层并行。
+   ![GPipe](/dit/gpipe.png)
+2. **张量并行 (Tensor Parallelism)**
+   将模型按运算垂直分割，例如将矩阵乘法或注意力头分布到多个设备上。每个设备处理部分计算，并通过All-reduce通信聚合结果（如[Megatron-LM](https://arxiv.org/abs/1909.08053)的实现）。这种方式适合参数量极大的模块（如Transformer层）
+   <img src="/dit/tensor_para.png" style="display: block; margin: 0 auto; width: 80%; max-width: 320px;" />
+
+### 序列并行 (Sequence/Context Parallelism)
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <div style="flex: 1; text-align: center;">
+    <img src="/dit/seq_para.png" style="width: 100%; max-width: 320px;" />
+    <div>序列并行</div>
+  </div>
+  <div style="flex: 1; text-align: center;">
+    <img src="/dit/ring_attn.png" style="width: 100%; max-width: 320px;" />
+    <div>Ring Self Attention</div>
+  </div>
+</div>
+
+[序列并行](https://arxiv.org/abs/2105.13120)是针对长序列输入设计的并行方法，将输入序列分割成多个子序列，分配到不同设备处理。例如，在自注意力机制中，每个设备计算局部注意力结果，再通过通信（如Ring Attention）整合全局信息。这种方法突破了单设备对序列长度的限制，适用于自然语言处理中的长文本任务。
+
+在这些基础的分布式范式上，仍然有很多高阶的分布式技巧比如[ZeRO](https://arxiv.org/abs/1910.02054)、3D并行被提出，利用DiT性质的并行策略比如[PipeFusion](https://arxiv.org/abs/2405.14430)，[USP](https://arxiv.org/abs/2405.07719)等范式也被提出，如果你对此感兴趣，可以参考这个博客[Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook?section=high-level_overview)。这个博客将带你详细进入分布式训练和推理的奇妙世界。
+   
 
 ## 快速上手
 
@@ -280,34 +343,6 @@ $$
 1. [扩散模型U-Net可视化理解](https://blog.csdn.net/weixin_43325228/article/details/135223972)
 2. [Diffusion模型为何倾向于钟爱U-net结构？](https://blog.csdn.net/KdpdCode/article/details/133155913)
 3. [扩散模型(Diffusion Model)详解：直观理解、数学原理、PyTorch 实现](https://zhouyifan.net/2023/07/07/20230330-diffusion-model/)
-
-<!-- 在奥斯本企业的量子计算实验室里，Gwen Stacy站在全息投影前，无数个平行宇宙的结局如同星河流转。她的白大褂口袋里，实验室门禁卡和蜘蛛侠面罩安静地躺在一起，就像两个注定相遇的灵魂。
-
-「 Peter，你看，」她的手指在空中划过，留下一道道发光的轨迹。全息投影中，无数个宇宙的结局如同量子叠加态般交织在一起，却都指向同一个悲剧性的终局。「 我们就像被困在一个巨大的概率场中，每次观测，每次选择，都会坍缩到相同的结局。」
-
-Peter Parker站在她身后，看着那些不断重演的悲剧。布鲁克林大桥上的坠落，钟楼顶端的诀别，每一个宇宙都在重复着相同的旋律。他的蜘蛛感应微微颤动，仿佛在诉说着某种可能性。
-
-「 但同时，」Gwen的声音突然变得明亮，「 就像量子涨落，在看似确定的世界里，总会有那么一丝不确定性。就像你的蜘蛛网，能够感知到最微小的震动。这些微小的波动，或许就是改变命运的关键。」
-
-她调出实验室的量子计算模型，无数个参数在空气中闪烁。「 这些参数就像不同宇宙的'命运权重'，它们决定了每个宇宙的走向。但如果我们能够找到正确的组合，就像找到那个能够打破悲剧循环的'激活函数'...」
-
-Peter若有所思：「 就像我的蜘蛛感应，能够预知危险并做出反应。你是说，我们可以找到那个最优的路径？」
-
-「 没错，」Gwen的眼中闪烁着希望的光芒，「 就像图像生成中的扩散过程。每个宇宙的悲剧就像是一张被噪声污染的图片，而我们要做的，就是一步步去除这些'噪声'，找到那个最纯净的、充满希望的结局。」
-
-她开始调整模型参数，就像在调音一般。「 看，当我们改变这些'命运权重'时，宇宙的走向就会发生微妙的变化。就像扩散模型中的 $\beta$ 参数，它决定了噪声的强度，也决定了我们能够多大程度地改变命运。」
-
-Peter看着全息投影中不断变化的场景，突然说道：「 就像我的蜘蛛网，能够捕捉到最微小的震动。这些参数之间的关联，就像网上的节点，互相影响，互相传递信息。」
-
-「 对！」Gwen兴奋地点头，「 这就是注意力机制的精髓。每个宇宙都不是孤立的，它们之间存在着某种神秘的联系。通过这种联系，我们可以找到那个能够打破悲剧循环的关键点。」
-
-随着参数的调整，全息投影中的场景开始发生奇妙的变化。布鲁克林大桥上的坠落变成了浪漫的相拥，钟楼顶端的诀别化作了甜蜜的约会。每一个悲剧的结局都在被重新书写，就像扩散模型中的去噪过程，一步步还原出最纯净的图案。
-
-「 看，」Gwen的声音因激动而微微发颤，「 当我们找到正确的参数组合时，就像找到了那个能够重构出happy ending的'潜在空间'。不是通过暴力，而是通过理解，通过爱，通过科学。」
-
-最终，当新的宇宙在第617.5维度诞生时，两个身影站在钟楼顶端。这一次，坠落的不是Gwen，而是被神经网络预测轨迹精准接住的无人机群。它们在夜空中划出绚丽的轨迹，就像一个个被去除的噪声点，最终呈现出最纯净的图案。
-
-「 看来，」Peter轻轻将Gwen搂入怀中，看着夜空中绚丽的轨迹，「 我们终于打破了那个该死的概率分布。」 -->
 
 <!-- 教程主要内容：
 1. 故事
