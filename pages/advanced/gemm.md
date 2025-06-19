@@ -1,11 +1,15 @@
 
 # GPU-HGEMM 加速赛题
 
-<script setup>import { onMounted } from 'vue'
+<script setup>
+import { onMounted } from 'vue'
+
 onMounted(() => {
   const overlay = Object.assign(document.createElement('div'), {
     style: `
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
       pointer-events: auto;
       background: rgba(0, 0, 0, 0.9);
       opacity: 0;
@@ -16,71 +20,21 @@ onMounted(() => {
   requestAnimationFrame(() => {
     overlay.style.opacity = 1
   })
-  // LOGO
-  const logo = Object.assign(document.createElement('div'), {
-    innerHTML: '2025 SUSTCSC RUST',
-    style: `
-      position: absolute; top: 40%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Courier New', monospace;
-      font-size: 32px;
-      color: #fff;
-      text-shadow:
-        0 0 8px rgba(0,255,0,0.8),
-        0 0 16px rgba(0,255,0,0.6),
-        0 0 24px rgba(255,255,255,0.4);
-      pointer-events: none;
-      z-index: 10000;
-    `
-  })
-  overlay.appendChild(logo)
-  // Prompt
-  const prompt = Object.assign(document.createElement('div'), {
-    innerText: '点击任意处继续',
-    style: `
-      position: absolute; top: 60%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      color: #0f0;
-      text-shadow: 0 0 6px rgba(0,255,0,0.7);
-      pointer-events: none;
-      z-index: 10000;
-    `
-  })
-  overlay.appendChild(prompt)
-  // Music Player (网易云嵌入)
-  const music = Object.assign(document.createElement('iframe'), {
-    src: '//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66',
-    width: '330',
-    height: '86',
-    frameborder: 'no',
-    style: `
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10001;
-      border: none;
-    `
-  })
-  overlay.appendChild(music)
 
-  // Canvas
+  // Matrix rain canvas
   const canvas = document.createElement('canvas')
-  Object.assign(canvas.style, {
-    position: 'absolute',
-    top: '0',
-    left: '0',
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none'
-  })
+  canvas.style.position = 'absolute'
+  canvas.style.top = '0'
+  canvas.style.left = '0'
+  canvas.style.width = '100%'
+  canvas.style.height = '100%'
+  canvas.style.pointerEvents = 'none'
   overlay.appendChild(canvas)
 
   const ctx = canvas.getContext('2d')
   let w = canvas.width = window.innerWidth
   let h = canvas.height = window.innerHeight
-  const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/'
+  const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/';
   const charSize = 16
   const columns = Math.floor(w / charSize)
   const drops = new Array(columns).fill(1)
@@ -88,7 +42,6 @@ onMounted(() => {
 
   ctx.fillStyle = '#0f0'
   ctx.font = charSize + 'px monospace'
-
   function animate() {
     if (!running) return
     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
@@ -97,14 +50,11 @@ onMounted(() => {
     for (let i = 0; i < drops.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)]
       ctx.fillText(char, i * charSize, drops[i] * charSize)
-      if (drops[i] * charSize > h && Math.random() > 0.975) {
-        drops[i] = 0
-      }
+      if (drops[i] * charSize > h && Math.random() > 0.975) drops[i] = 0
       drops[i]++
     }
     requestAnimationFrame(animate)
   }
-
   animate()
 
   window.addEventListener('resize', () => {
@@ -114,17 +64,62 @@ onMounted(() => {
     drops.fill(1)
   })
 
-  const closeOverlay = () => {
-    if (!running) return
+  // Typing effect dialog
+  const dialog = document.createElement('div')
+  dialog.style = `
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: monospace;
+    font-size: 20px;
+    color: #0f0;
+    white-space: pre-line;
+    max-width: 80vw;
+    line-height: 1.6;
+    z-index: 10001;
+  `
+  overlay.appendChild(dialog)
+
+  const lines = [
+    'Wake up, Neo.',
+    'The GEMM has you...',
+    'Follow the FLOPS.',
+    '',
+    'You\'re in the Matrix.',
+    'Not the one you\'ve heard of.',
+    'This one is built on CUDA, cuBLAS, and raw tensor power.',
+    '',
+    'You take the red kernel — you enter the competition.',
+    'You run matmul(A, B) — and I show you how deep the tensor goes.',
+    '',
+    'Welcome... to GEMMtrix.'
+  ]
+
+  let lineIdx = 0
+  let charIdx = 0
+  function typeNextChar() {
+    if (lineIdx >= lines.length) return
+    const line = lines[lineIdx]
+    dialog.textContent += line[charIdx++] || ''
+    if (charIdx >= line.length) {
+      dialog.textContent += '\n'
+      charIdx = 0
+      lineIdx++
+    }
+    setTimeout(typeNextChar, 50)
+  }
+  setTimeout(typeNextChar, 800)
+
+  // Auto close after 12s
+  setTimeout(() => {
     running = false
     overlay.style.opacity = 0
     setTimeout(() => overlay.remove(), 1200)
-  }
-
-  overlay.addEventListener('click', closeOverlay)
-  setTimeout(closeOverlay, 8000)
+  }, 12000)
 })
 </script>
+
 
 
 **联系人**：赖海斌 12211612@mail.sustech.edu.cn  
@@ -135,6 +130,9 @@ onMounted(() => {
 ### 1.1 赛题背景
 
 本次赛题要求在一张 NVIDIA V100 GPU上加速半精度通用矩阵乘法（HGEMM，Half-Precision General Matrix Multiplication）。HGEMM是矩阵乘法的一种形式，使用16位浮点数（half-precision, FP16）进行计算，适用于目前众多AI推理、高性能计算场景。
+
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe>
+[[toc]]
 
 GEMM（General Matrix Multiplication）通用矩阵乘法是科学计算与深度学习领域最核心的运算之一，其标准形式为：
 
