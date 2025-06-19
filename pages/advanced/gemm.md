@@ -34,7 +34,7 @@ onMounted(() => {
   const ctx = canvas.getContext('2d')
   let w = canvas.width = window.innerWidth
   let h = canvas.height = window.innerHeight
-  const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/';
+//   const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/';
   const charSize = 16
   const columns = Math.floor(w / charSize)
   const drops = new Array(columns).fill(1)
@@ -42,19 +42,19 @@ onMounted(() => {
 
   ctx.fillStyle = '#0f0'
   ctx.font = charSize + 'px monospace'
-  function animate() {
-    if (!running) return
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-    ctx.fillRect(0, 0, w, h)
-    ctx.fillStyle = '#0F0'
-    for (let i = 0; i < drops.length; i++) {
-      const char = chars[Math.floor(Math.random() * chars.length)]
-      ctx.fillText(char, i * charSize, drops[i] * charSize)
-      if (drops[i] * charSize > h && Math.random() > 0.975) drops[i] = 0
-      drops[i]++
-    }
-    requestAnimationFrame(animate)
-  }
+//   function animate() {
+//     if (!running) return
+//     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+//     ctx.fillRect(0, 0, w, h)
+//     ctx.fillStyle = '#0F0'
+//     for (let i = 0; i < drops.length; i++) {
+//       const char = chars[Math.floor(Math.random() * chars.length)]
+//       ctx.fillText(char, i * charSize, drops[i] * charSize)
+//       if (drops[i] * charSize > h && Math.random() > 0.975) drops[i] = 0
+//       drops[i]++
+//     }
+//     requestAnimationFrame(animate)
+//   }
 //   animate()
 
   window.addEventListener('resize', () => {
