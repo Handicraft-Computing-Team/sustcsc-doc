@@ -22,13 +22,28 @@ onMounted(() => {
   })
 
   // 打字特效内容
-  const lines = [
-    'Wake up, operator...',
-    'The matrix is initializing...',
-    'This is the GEMM Benchmark Arena.',
-    'GPU is all you need.',
+//   const lines = [
+//     'Wake up, operator...',
+//     'The matrix is initializing...',
+//     'This is the GEMM Benchmark Arena.',
+//     'GPU is all you need.',
+//     '',
+//     'Fastest wins. Optimize. Benchmark. Repeat.',
+//   ]
+
+   const lines = [
+    'Wake up, Neo.',
+    'The Matrix has you...',
+    'Follow the FLOPS.',
     '',
-    'Fastest wins. Optimize. Benchmark. Repeat.',
+    'You\'re in the Matrix.',
+    'This one is built on CUDA.',
+    '',
+    'You take the red kernel — you enter the competition.',
+    'You run matmul(A, B) — and I show you how deep the tensor goes.',
+    'Wake up, operator...',
+    '',
+    'Welcome... to GEMMatrix.'
   ]
 
   const dialogue = Object.assign(document.createElement('div'), {
@@ -93,6 +108,7 @@ onMounted(() => {
   overlay.addEventListener('click', closeOverlay)
 })
 </script>
+
 
 
 
