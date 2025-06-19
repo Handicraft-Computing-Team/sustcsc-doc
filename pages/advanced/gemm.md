@@ -55,7 +55,7 @@ onMounted(() => {
     }
     requestAnimationFrame(animate)
   }
-  animate()
+//   animate()
 
   window.addEventListener('resize', () => {
     w = canvas.width = window.innerWidth
@@ -120,7 +120,7 @@ onMounted(() => {
 })
 </script>
 
-
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe>
 
 **联系人**：赖海斌 12211612@mail.sustech.edu.cn  
 **硬件平台**：NVIDIA V100 GPU (32GB显存) \* 1 + Xeon Platinum CPU
@@ -131,8 +131,8 @@ onMounted(() => {
 
 本次赛题要求在一张 NVIDIA V100 GPU上加速半精度通用矩阵乘法（HGEMM，Half-Precision General Matrix Multiplication）。HGEMM是矩阵乘法的一种形式，使用16位浮点数（half-precision, FP16）进行计算，适用于目前众多AI推理、高性能计算场景。
 
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe>
-[[toc]]
+
+
 
 GEMM（General Matrix Multiplication）通用矩阵乘法是科学计算与深度学习领域最核心的运算之一，其标准形式为：
 
