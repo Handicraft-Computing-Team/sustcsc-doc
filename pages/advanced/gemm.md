@@ -1,5 +1,5 @@
 
-# GPU-HGEMM 加速赛题
+
 
 <script setup>
 import { onMounted } from 'vue'
@@ -21,7 +21,7 @@ onMounted(() => {
     overlay.style.opacity = 1
   })
 
-  // Typing text effect (dialogue)
+  // 打字特效内容
   const lines = [
     'Wake up, operator...',
     'The matrix is initializing...',
@@ -49,10 +49,7 @@ onMounted(() => {
   let lineIdx = 0
   let charIdx = 0
   function typeLine() {
-    if (lineIdx >= lines.length) {
-      showPrompt()
-      return
-    }
+    if (lineIdx >= lines.length) return
     const currentLine = lines[lineIdx]
     if (charIdx <= currentLine.length) {
       dialogue.innerHTML =
@@ -70,7 +67,7 @@ onMounted(() => {
   }
   typeLine()
 
-  // Press any key prompt
+  // 一开始就显示退出提示
   const prompt = Object.assign(document.createElement('div'), {
     innerText: '点击任意键继续...',
     style: `
@@ -82,27 +79,26 @@ onMounted(() => {
       color: #0f0;
       text-shadow: 0 0 6px rgba(0,255,0,0.7);
       z-index: 10002;
-      opacity: 0;
-      transition: opacity 1s ease-in;
+      opacity: 1;
     `,
   })
   overlay.appendChild(prompt)
-
-  function showPrompt() {
-    prompt.style.opacity = 1
-    window.addEventListener('keydown', closeOverlay)
-    overlay.addEventListener('click', closeOverlay)
-  }
 
   function closeOverlay() {
     overlay.style.opacity = 0
     setTimeout(() => overlay.remove(), 1200)
   }
+
+  window.addEventListener('keydown', closeOverlay)
+  overlay.addEventListener('click', closeOverlay)
 })
 </script>
 
 
+
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66"></iframe>
+
+# GPU-HGEMM 加速赛题
 
 **联系人**：赖海斌 12211612@mail.sustech.edu.cn  
 **硬件平台**：NVIDIA V100 GPU (32GB显存) \* 1 + Xeon Platinum CPU
