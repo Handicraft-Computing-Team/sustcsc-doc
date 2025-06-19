@@ -116,7 +116,7 @@ onMounted(() => {
     running = false
     overlay.style.opacity = 0
     setTimeout(() => overlay.remove(), 1200)
-  }, 12000)
+  }, 25000)
 })
 </script>
 
