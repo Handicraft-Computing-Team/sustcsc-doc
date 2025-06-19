@@ -105,9 +105,9 @@ Score = 70*(YourPerf / MaxPerf) + 30*(1 - Error)
 - Error：与cuBLAS结果的相对误差 -->
 
 **程序得分**由10个测试点分数构成。
-### 评分标准（ $$N_1$$ 个测试点）
+### 评分标准（ N 个测试点）
 $$
-\text{BaseScore} = \frac{1}{N_1} \sum_{i=1}^{N_1} \left[ 70 \times \left(\frac{\text{Perf}_i}{\text{MaxPerf}_i}\right) + 30 \times \left(1 - \text{RelError}_i\right) \right]
+\text{BaseScore} = \frac{1}{N} \sum_{i=1}^{N} \left[ 70 \times \left(\frac{\text{Perf}_i}{\text{MaxPerf}_i}\right) + 30 \times \left(1 - \text{RelError}_i\right) \right]
 $$
 
 
@@ -120,9 +120,9 @@ $$\frac{\text{Perf}}{\text{MaxPerf}}$$
 - **相对误差 RelError**    
   - 基于Frobenius范数的GEMM结果误差（参考值 vs 计算结果）：
 
-$`\text{RelError} = \frac{\|\mathbf{A}_{\text{ref}} - \mathbf{A}_{\text{calc}}\|_F}{\|\mathbf{A}_{\text{ref}}\|_F}`$
+$\text{RelError} = \frac{\|\mathbf{A}_{\text{ref}} - \mathbf{A}_{\text{calc}}\|_F}{\|\mathbf{A}_{\text{ref}}\|_F}$
 
-  - **误差容忍**：$`\text{RelError} > 0.05`$时，该测试点得分为0
+  - **误差容忍**：$\text{RelError} > 0.05$ 时，该测试点得分为0
 
 
 
