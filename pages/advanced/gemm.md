@@ -1,5 +1,131 @@
 
-# 南方科技大学 HPC 校内赛 - GPU-HGEMM 加速赛题
+# GPU-HGEMM 加速赛题
+
+<script setup>import { onMounted } from 'vue'
+onMounted(() => {
+  const overlay = Object.assign(document.createElement('div'), {
+    style: `
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: auto;
+      background: rgba(0, 0, 0, 0.9);
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    `
+  })
+  document.body.appendChild(overlay)
+  requestAnimationFrame(() => {
+    overlay.style.opacity = 1
+  })
+  // LOGO
+  const logo = Object.assign(document.createElement('div'), {
+    innerHTML: '2025 SUSTCSC RUST',
+    style: `
+      position: absolute; top: 40%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Courier New', monospace;
+      font-size: 32px;
+      color: #fff;
+      text-shadow:
+        0 0 8px rgba(0,255,0,0.8),
+        0 0 16px rgba(0,255,0,0.6),
+        0 0 24px rgba(255,255,255,0.4);
+      pointer-events: none;
+      z-index: 10000;
+    `
+  })
+  overlay.appendChild(logo)
+  // Prompt
+  const prompt = Object.assign(document.createElement('div'), {
+    innerText: '点击任意处继续',
+    style: `
+      position: absolute; top: 60%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: #0f0;
+      text-shadow: 0 0 6px rgba(0,255,0,0.7);
+      pointer-events: none;
+      z-index: 10000;
+    `
+  })
+  overlay.appendChild(prompt)
+  // Music Player (网易云嵌入)
+  const music = Object.assign(document.createElement('iframe'), {
+    src: '//music.163.com/outchain/player?type=2&id=536622945&auto=1&height=66',
+    width: '330',
+    height: '86',
+    frameborder: 'no',
+    style: `
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      border: none;
+    `
+  })
+  overlay.appendChild(music)
+
+  // Canvas
+  const canvas = document.createElement('canvas')
+  Object.assign(canvas.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none'
+  })
+  overlay.appendChild(canvas)
+
+  const ctx = canvas.getContext('2d')
+  let w = canvas.width = window.innerWidth
+  let h = canvas.height = window.innerHeight
+  const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/'
+  const charSize = 16
+  const columns = Math.floor(w / charSize)
+  const drops = new Array(columns).fill(1)
+  let running = true
+
+  ctx.fillStyle = '#0f0'
+  ctx.font = charSize + 'px monospace'
+
+  function animate() {
+    if (!running) return
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+    ctx.fillRect(0, 0, w, h)
+    ctx.fillStyle = '#0F0'
+    for (let i = 0; i < drops.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)]
+      ctx.fillText(char, i * charSize, drops[i] * charSize)
+      if (drops[i] * charSize > h && Math.random() > 0.975) {
+        drops[i] = 0
+      }
+      drops[i]++
+    }
+    requestAnimationFrame(animate)
+  }
+
+  animate()
+
+  window.addEventListener('resize', () => {
+    w = canvas.width = window.innerWidth
+    h = canvas.height = window.innerHeight
+    drops.length = Math.floor(w / charSize)
+    drops.fill(1)
+  })
+
+  const closeOverlay = () => {
+    if (!running) return
+    running = false
+    overlay.style.opacity = 0
+    setTimeout(() => overlay.remove(), 1200)
+  }
+
+  overlay.addEventListener('click', closeOverlay)
+  setTimeout(closeOverlay, 8000)
+})
+</script>
+
 
 **联系人**：赖海斌 12211612@mail.sustech.edu.cn  
 **硬件平台**：NVIDIA V100 GPU (32GB显存) \* 1 + Xeon Platinum CPU
