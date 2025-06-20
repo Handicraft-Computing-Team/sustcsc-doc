@@ -329,14 +329,6 @@ DiT在针对问题上，做出了几项比较重要的改进，才得以在扩�
 
 在这些基础的分布式范式上，仍然有很多高阶的分布式技巧比如[ZeRO](https://arxiv.org/abs/1910.02054)、3D并行被提出，利用DiT性质的并行策略比如[PipeFusion](https://arxiv.org/abs/2405.14430)，[USP](https://arxiv.org/abs/2405.07719)等范式也被提出，如果你对此感兴趣，可以参考这个博客[Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook?section=high-level_overview)。这个博客将带你详细进入分布式训练和推理的奇妙世界。
 
-## 快速上手
-
-### 集群使用
-
-### 环境配置
-
-### Profiler使用指南
-
 ## 题目说明
 
 Diffusion扩散模型不仅仅在文生图任务中应用广泛，在目前工业大模型中，以Transformer作为骨架网络的Diffusion扩散模型也得到广泛的应用，比如在蛋白质结构预测的AlphaFold3、在VLM（Vision-Language-Model）任务中的$\pi_0$模型都采用了类似结构，对Diffusion模型的训推加速仍然是目前学术界和工业界的热门话题。
