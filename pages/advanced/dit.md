@@ -350,10 +350,17 @@ Diffusion扩散模型不仅仅在文生图任务中应用广泛，在目前工�
    - 允许自定义环境配置（如 Dockerfile），但需保证可复现性
 
 4. **生成质量验证**  
-   - 请通过 `generate.py` 生成1000个标签对应的图片
-   - 请使用 `evaluate.py` 评测1000张生成图片FID以及Inception Score
-   - 最终FID以及Inception Score的分数需要满足 $e = \frac{\text{Original} - \text{Modified}}{\text{Original}} <= 1\%$
+   - 请通过 `sample.py` 生成8个标签对应的图片至 `sample.png`
+   - 请使用 `evaluate.py` 评测Baseline图片和代码改动之后生成图片的 `sample.png`，你会看到如下的结果
+   - 最终Pixel-wise Mean Absolute Difference, LPIPS的分数需要满足 $\text{score} \leq 0.01$，SSIM的分数需要满足 $0.99 \leq \text{score} \leq 1.0$，PSNR的分数需要满足 $>40$
    - 组委会有权要求参赛队伍进一步解释优化方案，并在不同参数或硬件下复测
+  ```
+=== Image Comparison Metrics ===
+Pixel-wise Mean Absolute Difference: 0.0000
+LPIPS (VGG):                        0.0000
+PSNR:                              inf dB
+SSIM:                              1.0000
+  ```
 
 5. **评测**
    - 评测模型为：VAE `stabilityai/sd-vae-ft-ema` + DiT `DiT-XL-2-512x512`
@@ -387,7 +394,7 @@ Diffusion扩散模型不仅仅在文生图任务中应用广泛，在目前工�
       | 160     | 48.0      |
       | 150     | 50        |
 
-6. **公平性与诚信**  
+2. **公平性与诚信**  
    - 禁止抄袭、恶意利用漏洞、篡改评测流程等行为
 
 ### 提交指南
