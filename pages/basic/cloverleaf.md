@@ -682,7 +682,7 @@ OpenMP 版本不匹配
 
 ### 编译
 
-首先，登录在超算平台的账号，克隆[仓库](https://github.com/Charley-xiao/tempestissimo)，进入目录 `CloverLeaf_ref/`。
+首先，登录在超算平台的账号，下载[压缩包](/release/CloverLeaf20250622.tar.gz)，进入根目录。
 
 然后，使用 `module load ...` 指令来用指定的编译器来编译 CloverLeaf。你可以使用 `module avail` 来查看平台上可用的编译器及相关库。
 
