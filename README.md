@@ -21,4 +21,5 @@ npm run docs:dev
 2. 请将自定义的Vue组件放在 `components` 目录下。
 3. 请将静态资源放在 `public` 目录下。（包括图片，请放在 `public/images` 目录下）
 4. 所有的目录 `/` 都是相对于本文件的根目录。
+5. 更新得分请在 `public/scores` 中更改得分情况
 

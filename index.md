@@ -31,3 +31,8 @@ features:
 
 ---
 
+<ScoreBoard />
+<script setup>
+import ScoreBoard from './components/ScoreBoard.vue'
+</script>
+
