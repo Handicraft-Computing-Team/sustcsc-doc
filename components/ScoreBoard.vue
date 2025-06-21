@@ -1,228 +1,258 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Papa from 'papaparse'
 
 const basic_scores = ref([])
 const advanced_scores = ref([])
+const selectedTab = ref('basic')          // 👉 当前显示的赛道
 
+// 读取 CSV
 onMounted(async () => {
-  const basic_res = await fetch('scores/basic_scores.csv')
-  const basic_text = await basic_res.text()
-  const advanced_res = await fetch('scores/advanced_scores.csv')
-  const advanced_text = await advanced_res.text()
+  const [basic_text, advanced_text] = await Promise.all([
+    fetch('scores/basic_scores.csv').then(r => r.text()),
+    fetch('scores/advanced_scores.csv').then(r => r.text()),
+  ])
 
-  const basic_parsed = Papa.parse(basic_text, { header: true, skipEmptyLines: true })
-  const advanced_parsed = Papa.parse(advanced_text, { header: true, skipEmptyLines: true })
-
-  basic_scores.value = basic_parsed.data.map(row => ({
-    team_id: row.team_id,
-    team: row.team,
-    C_CPP: Number(row.C_CPP) || 0,
-    Rust: Number(row.Rust) || 0,
-    CloverLeaf: Number(row.CloverLeaf) || 0,
-    basicTotal:
-      (Number(row.C_CPP) || 0) +
-      (Number(row.Rust) || 0) +
-      (Number(row.CloverLeaf) || 0),
+  basic_scores.value = Papa.parse(basic_text, { header: true, skipEmptyLines: true }).data.map(r => ({
+    team_id: r.team_id,
+    team:     r.team,
+    C_CPP:    +r.C_CPP      || 0,
+    Rust:     +r.Rust       || 0,
+    CloverLeaf: +r.CloverLeaf || 0,
+    total: (+r.C_CPP || 0) + (+r.Rust || 0) + (+r.CloverLeaf || 0),
   }))
-  advanced_scores.value = advanced_parsed.data.map(row => ({
-    team_id: row.team_id,
-    team: row.team,
-    HGEMM: Number(row.HGEMM) || 0,
-    DiT: Number(row.DiT) || 0,
-    WRF: Number(row.WRF) || 0,
-    advTotal:
-      (Number(row.HGEMM) || 0) +
-      (Number(row.DiT) || 0) +
-      (Number(row.WRF) || 0),
+
+  advanced_scores.value = Papa.parse(advanced_text, { header: true, skipEmptyLines: true }).data.map(r => ({
+    team_id: r.team_id,
+    team:     r.team,
+    HGEMM:    +r.HGEMM || 0,
+    DiT:      +r.DiT   || 0,
+    WRF:      +r.WRF   || 0,
+    total: (+r.HGEMM || 0) + (+r.DiT || 0) + (+r.WRF || 0),
   }))
 })
+
+// 排序后列表
+const sortedBasic = computed(() =>
+  [...basic_scores.value].sort((a, b) => b.total - a.total),
+)
+const sortedAdv = computed(() =>
+  [...advanced_scores.value].sort((a, b) => b.total - a.total),
+)
 </script>
 
 <template>
-  <h2 style="text-align:center;margin-top:2em;">🏅 实时排行榜</h2>
-  <div class="scoreboard-flex">
-    <!-- 基础赛道 -->
-    <div class="scoreboard-card basic">
+  <h2 class="page-title">🏅 实时排行榜</h2>
+
+  <!-- 切换控件 -->
+  <div class="segmented">
+    <button
+      :class="{ active: selectedTab === 'basic' }"
+      @click="selectedTab = 'basic'"
+    >
+      基础赛道
+    </button>
+    <button
+      :class="{ active: selectedTab === 'advanced' }"
+      @click="selectedTab = 'advanced'"
+    >
+      进阶赛道
+    </button>
+    <!-- 滑块 -->
+    <span
+      class="glider"
+      :style="{ transform: selectedTab === 'basic' ? 'translateX(0)' : 'translateX(100%)' }"
+    />
+  </div>
+
+  <!-- 单张榜单，带动画 -->
+  <transition name="slide-fade" mode="out-in">
+    <!-- 基础榜单 -->
+    <div
+      v-if="selectedTab === 'basic'"
+      key="basic"
+      class="scoreboard-card basic glassy"
+    >
       <h3>基础赛道</h3>
       <table class="scoreboard-table">
         <thead>
           <tr>
-            <th>排名</th>
-            <th>队伍</th>
-            <th>C/CPP</th>
-            <th>Rust</th>
-            <th>CloverLeaf</th>
-            <th>小计</th>
+            <th>排名</th><th>队伍</th><th>C/CPP</th><th>Rust</th><th>CloverLeaf</th><th>小计</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, idx) in [...basic_scores].sort((a,b)=>b.basicTotal-a.basicTotal)" :key="row.team_id">
-            <td>{{ idx + 1 }}</td>
+          <tr v-for="(row, i) in sortedBasic" :key="row.team_id">
+            <td>{{ i + 1 }}</td>
             <td>{{ row.team }}</td>
             <td>{{ row.C_CPP }}</td>
             <td>{{ row.Rust }}</td>
             <td>{{ row.CloverLeaf }}</td>
-            <td class="scoreboard-total">{{ row.basicTotal }}</td>
+            <td class="total">{{ row.total }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <!-- 进阶赛道 -->
-    <div class="scoreboard-card advanced">
+
+    <!-- 进阶榜单 -->
+    <div
+      v-else
+      key="adv"
+      class="scoreboard-card advanced glassy"
+    >
       <h3>进阶赛道</h3>
       <table class="scoreboard-table">
         <thead>
           <tr>
-            <th>排名</th>
-            <th>队伍</th>
-            <th>HGEMM</th>
-            <th>DiT</th>
-            <th>WRF</th>
-            <th>小计</th>
+            <th>排名</th><th>队伍</th><th>HGEMM</th><th>DiT</th><th>WRF</th><th>小计</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, idx) in [...advanced_scores].sort((a,b)=>b.advTotal-a.advTotal)" :key="row.team_id">
-            <td>{{ idx + 1 }}</td>
+          <tr v-for="(row, i) in sortedAdv" :key="row.team_id">
+            <td>{{ i + 1 }}</td>
             <td>{{ row.team }}</td>
             <td>{{ row.HGEMM }}</td>
             <td>{{ row.DiT }}</td>
             <td>{{ row.WRF }}</td>
-            <td class="scoreboard-total">{{ row.advTotal }}</td>
+            <td class="total">{{ row.total }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
+  </transition>
 </template>
 
 <style>
-.scoreboard-flex {
-  display: flex;
-  gap: 2em;
-  flex-wrap: wrap;
-  justify-content: center;
+/* ---------------- 基础色板 ---------------- */
+:root {
+  --basic-color:   #2BB7B3;
+  --adv-color:     #ED6C00;
 }
 
-.scoreboard-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 1.5em 1em 1.2em;
-  min-width: 340px;
-  max-width: 800px;
-  margin-bottom: 2em;
-  transition: transform 0.2s ease;
+/* ---------------- 页面标题 ---------------- */
+.page-title {
+  text-align: center;
+  margin: 2rem 0 1.5rem;
+  font-size: 1.9rem;
+  letter-spacing: 1px;
 }
-.scoreboard-card:hover {
-  transform: translateY(-3px);
+
+/* ---------------- Segmented Control ---------------- */
+.segmented {
+  position: relative;
+  width: 320px;
+  margin: 0 auto 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: 100px;
+  background: #eee;
+  overflow: hidden;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.12);
+}
+.segmented button {
+  position: relative;     /* 新增 */
+  z-index: 2;             /* 新增：确保文字永远在滑块之上 */
+  padding: 0.7rem 0;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.25s;
+}
+.segmented button.active { color: #000; }
+.dark .segmented { background: #333; }
+.dark .segmented button { color: #aaa; }
+.dark .segment button.active { color: #fff; }
+
+/* 滑块 */
+.glider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 4px);
+  height: calc(100% - 4px);
+  background: linear-gradient(135deg, var(--basic-color), var(--adv-color));
+  border-radius: 100px;
+  transition: transform 0.35s ease;
+  z-index: 1;
+}
+
+/* ---------------- 卡片 & 表格 ---------------- */
+.scoreboard-card {
+  display: flex; 
+  flex-direction: column;
+  align-items: center;
+  max-width: 860px;
+  margin: 0 auto 3rem;
+  padding: 2rem 1.2rem 1.8rem;
+  border-radius: 24px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  transition: transform 0.25s ease;
+}
+.scoreboard-card:hover { transform: translateY(-6px); }
+
+.glassy {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.09);
+}
+.dark .glassy {
+  background: rgba(30, 30, 30, 0.55);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.55);
 }
 
 .scoreboard-card h3 {
   text-align: center;
-  margin-bottom: 1em;
-  font-size: 1.3em;
+  margin-bottom: 1.2rem;
+  font-size: 1.4rem;
   letter-spacing: 1px;
 }
-
-.scoreboard-card.basic h3 {
-  color: #2BB7B3;
-}
-.scoreboard-card.advanced h3 {
-  color: #ED6C00;
-}
+.basic h3    { color: var(--basic-color); }
+.advanced h3 { color: var(--adv-color); }
 
 .scoreboard-table {
-  width: 100%;
+  width: auto !important;
   border-collapse: collapse;
-  font-size: 1.05em;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-size: 1.05rem;
+  margin: 0 auto;
 }
-
 .scoreboard-table thead tr {
-  background: linear-gradient(90deg, #2BB7B3 60%, #7DE5DF 100%);
   color: #fff;
+  background: var(--basic-color);
 }
-.scoreboard-card.advanced .scoreboard-table thead tr {
-  background: linear-gradient(90deg, #ED6C00 60%, #FFA94D 100%);
+.advanced .scoreboard-table thead tr {
+  background: var(--adv-color);
 }
 
 .scoreboard-table th,
 .scoreboard-table td {
-  padding: 10px;
+  padding: 12px 10px;
   text-align: center;
-  border-bottom: 1px solid #e5e7eb;
 }
+.scoreboard-table tbody tr:nth-child(odd) { background: rgba(0,0,0,0.03); }
+.advanced .scoreboard-table tbody tr:nth-child(odd) { background: rgba(255,125,0,0.06); }
+.dark .scoreboard-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.05); }
 
-.scoreboard-table tbody tr:nth-child(even) {
-  background: #f9f9f9;
-}
-.scoreboard-card.advanced .scoreboard-table tbody tr:nth-child(even) {
-  background: #fff7f3;
-}
-
-.scoreboard-table tbody tr:hover {
-  background-color: #f0fdfa;
-}
-.scoreboard-card.advanced .scoreboard-table tbody tr:hover {
-  background-color: #fff0e5;
-}
-
-.scoreboard-total {
+.total {
   font-weight: 700;
-  color: #2BB7B3;
-  font-size: 1.1em;
+  color: var(--basic-color);
 }
-.scoreboard-card.advanced .scoreboard-total {
-  color: #ED6C00;
+.advanced .total { color: var(--adv-color); }
+
+/* ---------------- 动画 ---------------- */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all .45s cubic-bezier(.45, .23, .21, 1.02);
+}
+.slide-fade-enter-from {
+  opacity: 0; transform: translateY(30px);
+}
+.slide-fade-leave-to {
+  opacity: 0; transform: translateY(-30px);
 }
 
-/* Style for dark style */
-.dark .scoreboard-card {
-    background: #1e1e1e;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+@media (max-width: 640px) {
+  .scoreboard-table { width: 100% !important; }
+  .scoreboard-card  { align-items: stretch; }  /* 小屏铺满 */
 }
-
-.dark .scoreboard-table {
-  background: #1e1e1e;
-  color: #e0e0e0;
-}
-
-.dark .scoreboard-table thead tr {
-  background: linear-gradient(90deg, #2BB7B3 60%, #1DA7A1 100%);
-  color: #fff;
-}
-
-.dark .scoreboard-card.advanced .scoreboard-table thead tr {
-  background: linear-gradient(90deg, #ED6C00 60%, #cc5700 100%);
-}
-
-.dark .scoreboard-table tbody tr:nth-child(even) {
-  background: #2a2a2a;
-}
-
-.dark .scoreboard-card.advanced .scoreboard-table tbody tr:nth-child(even) {
-  background: #2f2118;
-}
-
-.dark .scoreboard-table tbody tr:hover {
-  background-color: #2d3f3f;
-}
-
-.dark .scoreboard-card.advanced .scoreboard-table tbody tr:hover {
-  background-color: #3e2b1e;
-}
-
-.dark .scoreboard-total {
-  color: #2BB7B3;
-}
-
-.dark .scoreboard-card.advanced .scoreboard-total {
-  color: #ED6C00;
-}
-
 </style>
