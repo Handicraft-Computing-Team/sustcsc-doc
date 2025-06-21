@@ -2,6 +2,11 @@
 title: WRF数值天气预报挑战
 ---
 
+<Wrf />
+<script setup>
+import Wrf from '../../components/Wrf.vue'
+</script>
+
 # WRF数值天气预报挑战
 
 > 出题人：Jiahua Zhao
