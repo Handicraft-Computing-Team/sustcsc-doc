@@ -27,7 +27,7 @@ export default defineConfig({
       {
         text: '基础赛道',
         items: [
-          { text: 'C/CPP编程挑战', link: '/pages/basic/c' },
+          { text: '量子计算模拟编程挑战', link: '/pages/basic/c' },
           { text: 'Rust LWE 编程挑战', link: '/pages/basic/rust' },
           { text: 'CloverLeaf 编译优化挑战', link: '/pages/basic/cloverleaf' }
         ]

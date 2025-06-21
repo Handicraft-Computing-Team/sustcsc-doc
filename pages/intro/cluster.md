@@ -104,6 +104,75 @@ title: 集群使用指南
 
 ## 作业调度系统
 
+在超级计算机上，资源总是有限的，而用户和任务却可能成百上千。这时，**作业调度系统**（Job Scheduler）就成为整个高性能计算平台的“总指挥官”，它负责接收用户任务、评估资源情况，并高效地将任务安排到适当的计算节点上执行。
+
+### 调度系统是用来？
+
+作业调度系统的核心价值在于**资源的高效利用与公平分配**。在没有调度系统的情况下，用户可能会争抢资源、任务冲突频发，最终导致计算资源被大量浪费或长时间闲置。而有了调度系统之后，它可以：
+
+- 保证每个任务按规则排队执行（先来先服务、优先级、高通量等）
+- 支持任务并行、分布式执行
+- 合理预估资源占用，防止系统过载
+- 自动记录任务状态与日志，便于用户跟踪与管理
+
+### 常见的调度器系统
+
+目前主流的调度器有：
+
+* **Slurm**（Simple Linux Utility for Resource Management）：目前使用最广泛的开源调度系统，广泛用于高校、科研机构与国家超算中心
+* **PBS / Torque**：较早的调度系统之一，许多老牌集群仍在使用
+* **LSF、LoadLeveler、HTCondor** 等：多用于企业、商业场景或特定科研机构，启明和太乙使用的便是LSF作业调度系统
+
+其中 **Slurm** 以其模块化、可扩展、文档完善的特点，在学术界和工程界都有非常高的采用率。
+
+### Slurm 使用流程
+
+本次校内超算竞赛平台采用的调度系统为Slurm，Slurm的官方指南请查看[这里](https://slurm.schedmd.com/quickstart.html)，我们在这里将会简单介绍Slurm的使用方式，Slurm的常用指令有：
+
+| 命令             | 中文说明                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **`sacct`**    | 用于查询作业或作业步骤的账务信息，包括正在运行或已完成的作业。                                                                                          |
+| **`salloc`**   | 用于**实时分配资源**给一个作业。通常用于分配资源后启动一个交互式 Shell，用户可以在这个 Shell 中使用 `srun` 启动并行任务。                                                |
+| **`sattach`**  | 用于**连接到一个正在运行的作业或作业步骤**，附加标准输入、输出、错误流以及信号处理功能。可多次连接或断开。                                                                  |
+| **`sbatch`**   | 用于**提交一个作业脚本**以便稍后执行。脚本通常会包含一个或多个 `srun` 命令来启动并行任务。                                                                      |
+| **`scancel`**  | 用于**取消一个等待中或正在运行的作业或作业步骤**。也可以用于向作业相关进程发送特定信号。                                                                           |
+| **`sinfo`**    | 用于**查看 Slurm 管理的分区（partition）和节点状态**。支持多种过滤、排序和格式化选项。                                                                    |
+| **`squeue`**   | 用于**查看作业或作业步骤的状态**。支持多种筛选、排序和格式化选项。默认按照优先级显示运行中的作业，然后是等待中的作业。                                                            |
+| **`srun`**     | 用于**立即提交一个作业或启动作业步骤**。支持大量资源指定选项，包括：最小/最大节点数、CPU 数量、指定使用或排除的节点、节点特性（内存大小、磁盘空间、功能标签等）。一个作业可以包含多个串行或并行的作业步骤，分别在共享或独立资源上运行。 |
+
+通常来说，我们会选择在登录撰写作业脚本 `job.slurm` 并通过 `sbatch` 将作业提交到对应的队列中，可以使用的队列可以通过 `sinfo` 来查看，下面是一个提交到CPU队列的Slurm脚本案例：
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=cpu_job_test       # 作业名称
+#SBATCH --partition=cpu              # 提交到 CPU 队列（partition 名）
+#SBATCH --nodes=1                    # 所需节点数
+#SBATCH --ntasks=1                   # 总任务数（通常 = 核心数）
+#SBATCH --cpus-per-task=4            # 每个任务使用的 CPU 核心数
+#SBATCH --time=02:00:00              # 最长运行时间（格式：hh:mm:ss）
+#SBATCH --output=cpu_job_%j.out      # 标准输出日志（%j 会替换为作业ID）
+#SBATCH --error=cpu_job_%j.err       # 标准错误日志
+
+# 加载所需的模块（根据你平台的 module 系统）
+module purge
+module load gcc/9.3.0
+module load python/3.10
+
+# 或者通过设置环境变量来配置环境
+export PATH=$PATH:/work/user/bin
+export LIBRARY_PATH=$LIBRARY_PATH:/work/user/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/user/lib
+
+# 显示环境信息
+echo "Job started on $(hostname) at $(date)"
+echo "Running on CPU with $SLURM_CPUS_ON_NODE cores"
+
+# 执行你的程序（示例为 Python 脚本）
+python my_cpu_program.py
+
+echo "Job finished at $(date)"
+```
+
 ## 太乙与启明
 
 ## 参考
@@ -111,3 +180,4 @@ title: 集群使用指南
 1. [超级计算机技术架构](https://chaosuanwiki.com/liaojiechaosuan/chao-ji-ji-suan-ji-ji-shu-jia-gou.html)
 2. [超算平台入门教程 —— 简介](https://zhuanlan.zhihu.com/p/659384116)
 3. [什么是超级计算？](https://www.ibm.com/cn-zh/topics/supercomputing)
+4. [Slurm 用户使用手册](https://slurm.schedmd.com/quickstart.html)
