@@ -589,7 +589,7 @@ Terminated with exit code 137
 - **`CloverLeaf-2D/results/report.pdf`** （赛中可不包含）  
   工程报告（可为 docx 或 pdf）。
 
-### 赛中评测
+<!-- ### 赛中评测
 
 赛中评测仅评测性能分数。
 
@@ -599,7 +599,7 @@ Terminated with exit code 137
 
 ### 赛后评测
 
-赛后评测会在比赛结束后进行，比赛最后的分数会在微信群中以及通过邮件公布。请在比赛结束前，将压缩包命名为 `teamname_final.tar.gz`，其中 `teamname` 为队名，并作为附件发送邮件至 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn).
+赛后评测会在比赛结束后进行，比赛最后的分数会在微信群中以及通过邮件公布。请在比赛结束前，将压缩包命名为 `teamname_final.tar.gz`，其中 `teamname` 为队名，并作为附件发送邮件至 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). -->
 
 ## 第二幕：崩落的界域
 
