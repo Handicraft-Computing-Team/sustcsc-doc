@@ -8,6 +8,27 @@ title: 集群使用指南
 
 ![天河](/cluster/tianhe.png)
 
+## 从0到1在学校Top500超算集群跑HPL程序
+
+> By [赖海斌](https://space.bilibili.com/358070321) 12211612@mail.sustech.edu.cn 
+
+::: info ✅ 温馨提醒
+你可以通过这个视频，主要介绍了底层系统知识、集群作业调度系统、容器和环境的基础知识。提到了多线程技术可以提高计算效率，如通过并行计算将任务分配到不同的CPU上进行计算。此外，还介绍了启明平台的基本结构和资源，包括CPU节点、内核之间的通信、NUMA结构等。最后，提到了一些相关的工具和库，如MPI、Java编译器、矩阵处理、线性代数函数库等。还在学校曾经的Top500超算集群上编译和运行了HPL程序。
+:::
+
+<div style="position: relative; width: 100%; max-width: 800px; margin: 40px auto; box-shadow: 0 4px 24px #0002; border-radius: 16px; overflow: hidden; background: #181c2f;">
+  <iframe 
+    src="https://player.bilibili.com/player.html?bvid=BV1et4y1f7KK&page=1&as_wide=1&high_quality=1&danmaku=0"
+    allowfullscreen="allowfullscreen" 
+    width="100%" 
+    height="450" 
+    scrolling="no" 
+    frameborder="0" 
+    style="display: block; border: none;"
+    sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts">
+  </iframe>
+</div>
+
 ## 超算集群介绍
 
 ### 什么是超级计算机？

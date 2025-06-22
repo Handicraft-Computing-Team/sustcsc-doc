@@ -299,3 +299,24 @@ onMounted(() => {
 
 # 量子计算模拟编程挑战
 
+
+## 快速入门 C/CPP
+
+> By [赖海斌](https://space.bilibili.com/358070321) 12211612@mail.sustech.edu.cn 
+
+::: info ✅ 温馨提醒
+本视频为南方科技大学CS205 C/CPP课程复习课，大家可以作为C/CPP语言的入门视频
+:::
+
+<div style="position: relative; width: 100%; max-width: 800px; margin: 40px auto; box-shadow: 0 4px 24px #0002; border-radius: 16px; overflow: hidden; background: #181c2f;">
+  <iframe 
+    src="https://player.bilibili.com/player.html?bvid=BV1PFf6YGEyW&page=1&as_wide=1&high_quality=1&danmaku=0"
+    allowfullscreen="allowfullscreen" 
+    width="100%" 
+    height="450" 
+    scrolling="no" 
+    frameborder="0" 
+    style="display: block; border: none;"
+    sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts">
+  </iframe>
+</div>
