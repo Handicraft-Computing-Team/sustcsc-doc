@@ -174,7 +174,74 @@ python my_cpu_program.py
 echo "Job finished at $(date)"
 ```
 
+## 常用Linux指令
+
+### 基础配置与系统信息
+
+```shell
+lscpu                # 查看CPU配置信息
+nvidia-smi           # 查看GPU使用情况
+nvidia-smi topo -m   # 查看GPU拓扑结构
+top                  # 实时查看进程和系统负载
+htop                 # 更友好的进程和资源监控（部分系统需自行安装）
+free -h              # 查看内存使用情况
+uname -a             # 查看操作系统内核信息
+cat /proc/cpuinfo    # 查看详细CPU信息
+cat /proc/meminfo    # 查看详细内存信息
+```
+
+### 存储与磁盘空间
+
+```shell
+ls -lah                        # 查看当前目录下文件和大小
+df -h                          # 查看磁盘分区挂载和剩余空间
+du -h --max-depth=1            # 查看当前目录下各子目录大小
+find . -name "*.out"           # 查找当前目录下所有 .out 文件
+```
+
+### 文件与目录操作
+
+```shell
+cp source.txt dest.txt         # 复制文件
+mv oldname.txt newname.txt     # 重命名或移动文件
+rm file.txt                    # 删除文件
+rm -r dir/                     # 删除目录及其内容
+mkdir newdir                   # 新建目录
+tar -czvf archive.tar.gz dir/  # 打包并压缩目录
+tar -xzvf archive.tar.gz       # 解压 tar.gz 文件
+```
+
+### 网络与远程
+
+```shell
+ssh user@hostname              # 远程登录
+scp file.txt user@host:/path/  # 远程拷贝文件到服务器
+wget http://url/file           # 下载文件
+```
+
+### 软件与环境
+
+```shell
+module avail                   # 查看可用的软件模块
+module load gcc/9.3.0          # 加载指定版本的软件模块
+module list                    # 查看当前已加载模块
+conda activate myenv           # 激活conda环境（如有安装）
+```
+
+### 作业管理（Slurm）
+
+```shell
+squeue                         # 查看作业队列
+sinfo                          # 查看分区和节点状态
+sacct                          # 查询作业历史和资源使用
+sbatch job.slurm               # 提交作业脚本
+scancel <jobid>                # 取消作业
+srun hostname                  # 交互式运行命令
+```
+
 ## 太乙与启明
+
+
 
 ## 参考
 
@@ -182,3 +249,4 @@ echo "Job finished at $(date)"
 2. [超算平台入门教程 —— 简介](https://zhuanlan.zhihu.com/p/659384116)
 3. [什么是超级计算？](https://www.ibm.com/cn-zh/topics/supercomputing)
 4. [Slurm 用户使用手册](https://slurm.schedmd.com/quickstart.html)
+5. [太乙启明使用指南](https://hpc.sustech.edu.cn/ref/QuickStartforClusterPlatformofCCSE.pdf)
