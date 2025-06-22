@@ -108,10 +108,10 @@ onMounted(() => {
   
   document.addEventListener('click', clickListener);
 
-  // 30秒后自动淡出
+  // 7秒后自动淡出
   autoFadeOutTimer = setTimeout(() => {
     fadeOut();
-  }, 30000);
+  }, 7000);
 
   // 清理resize监听器
   cleanup = () => {
