@@ -2,11 +2,11 @@
   <div ref="overlayRef" style="position:fixed;inset:0;z-index:9999;pointer-events:auto;background:transparent;opacity:0;transition:opacity 1.2s ease;">
     <div
       style="position:absolute;
-      top:10%; /* 调整位置 */
+      top:40%;
       left:50%;
       transform:translate(-50%,-50%);
       font-family:'Courier New',monospace;
-      font-size:20px; /* 调整字体大小 */
+      font-size:24px;
       color:#fff;
       text-shadow: 0 0 8px rgba(255,215,0,0.8),
                    0 0 16px rgba(255,215,0,0.6);
@@ -18,10 +18,10 @@
     </div>
     <div
       style="position:absolute;
-      bottom:10%; /* 调整位置 */
+      top:60%;
       left:50%;
       transform:translate(-50%,-50%);
-      font-size:18px; /* 调整字体大小 */
+      font-size:24px;
       color: #ADD8E6; /* 淡蓝色 */
       text-shadow: 0 0 6px rgba(173,216,230,0.7);
       pointer-events:none;

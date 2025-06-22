@@ -1,155 +1,28 @@
 ---
-title: Rust 高性能计算挑战赛
+title: Rust 编程挑战
 ---
 
+<RustCrab />
 <script setup>
-import { onMounted, ref } from 'vue'
-
-onMounted(() => {
-  const overlay = Object.assign(document.createElement('div'), {
-    style: `
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      pointer-events: auto;
-      background: rgba(0, 0, 0, 0.9);
-      opacity: 0;
-      transition: opacity 1.2s ease;
-    `
-  })
-  document.body.appendChild(overlay)
-  requestAnimationFrame(() => { overlay.style.opacity = 1 })
-
-  // Matrix LOGO text
-  const logo = Object.assign(document.createElement('div'), {
-    innerHTML: '2025 SUSTCSC <span style="color:#0f0;">RUST</span>',
-    style: `
-      position: absolute;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: 'Courier New', monospace;
-      font-size: 32px;
-      color: #fff;
-      text-shadow:
-        0 0 8px rgba(0,255,0,0.8),
-        0 0 16px rgba(0,255,0,0.6),
-        0 0 24px rgba(255,255,255,0.4);
-      pointer-events: none;
-      z-index: 10000;
-    `
-  })
-  overlay.appendChild(logo)
-
-  // Click prompt
-  const prompt = Object.assign(document.createElement('div'), {
-    innerText: '点击任意处继续',
-    style: `
-      position: absolute;
-      top: 60%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      color: #0f0;
-      text-shadow: 0 0 6px rgba(0,255,0,0.7);
-      pointer-events: none;
-      z-index: 10000;
-    `
-  })
-  overlay.appendChild(prompt)
-
-  // Matrix rain canvas
-  const canvas = document.createElement('canvas')
-  canvas.style.position = 'absolute'
-  canvas.style.top = '0'
-  canvas.style.left = '0'
-  canvas.style.width = '100%'
-  canvas.style.height = '100%'
-  canvas.style.pointerEvents = 'none'
-  overlay.appendChild(canvas)
-
-  // Setup canvas
-  const ctx = canvas.getContext('2d')
-  let w = canvas.width = window.innerWidth
-  let h = canvas.height = window.innerHeight
-
-  // Characters to use (mix of Katakana, numbers, and Rust-related symbols)
-  const chars = 'ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ012345789:・.RUST{}[]&<>=!+-*/';
-  const charSize = 16
-  const columns = Math.floor(w / charSize)
-  const drops = new Array(columns).fill(1)
-  let running = true
-
-  // Green matrix color
-  ctx.fillStyle = '#0f0'
-  ctx.font = charSize + 'px monospace'
-
-  function animate() {
-    if (!running) return
-    
-    // Semi-transparent black to create fade effect
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-    ctx.fillRect(0, 0, w, h)
-    
-    ctx.fillStyle = '#0F0'
-    for (let i = 0; i < drops.length; i++) {
-      // Random character
-      const char = chars[Math.floor(Math.random() * chars.length)]
-      
-      // Draw the character
-      ctx.fillText(char, i * charSize, drops[i] * charSize)
-      
-      // Move the drop down
-      if (drops[i] * charSize > h && Math.random() > 0.975) {
-        drops[i] = 0
-      }
-      drops[i]++
-    }
-    requestAnimationFrame(animate)
-  }
-
-  // Start animation
-  animate()
-
-  // Handle window resize
-  window.addEventListener('resize', () => {
-    w = canvas.width = window.innerWidth
-    h = canvas.height = window.innerHeight
-    drops.length = Math.floor(w / charSize)
-    drops.fill(1)
-  })
-
-  // Close overlay function
-  const closeOverlay = () => {
-    if (!running) return // Prevent multiple closings
-    running = false
-    overlay.style.opacity = 0
-    setTimeout(() => overlay.remove(), 1200)
-  }
-
-  // Close on click
-  overlay.addEventListener('click', closeOverlay)
-  
-  // Auto close after 6 seconds
-  setTimeout(closeOverlay, 6000)
-})
+import RustCrab from '../../components/RustCrab.vue'
 </script>
-
-<ClientOnly />
 
 # 🦀 SUSTCSC 2025 - Rust高性能计算大冒险！
 
-> 指挥官: Ben Chen \<chenb2022@mail.sustech.edu.cn\>
-> 
-> 战场: 超强Xeon Platinum CPU（没错，就是那种能烤肉的那种💪）
+> 作者: [Ben Chen](https://github.com/chanbengz)
 
-## 🗺️ 你的秘密任务地图
 
-好奇宝宝看过来！这个神秘仓库里藏了什么宝藏？
-- 🧩 入门代码：基于LWE的全同态加密挑战（听起来很厉害的样子，对吧？）
-    - 🔥 终极BOSS关卡：敢来挑战破解LWE问题吗？
-- 📚 生存指南：我们用`mdbook`自动构建的精美网站，
-  [点击传送门](https://sustcsc25.benx.dev)直达知识宝库！
+::: info
+你说得对，但是 Rust 是由 Mozilla 自主研发的一款全新的编译期格斗游戏。编译将发生在一个被称作「Cargo」的构建系统中。在这里，被引用的指针将被授予「生命周期」之力，导引对象安全。你将扮演一位名为「Rustacean」的神秘角色, 在与「Rustc」的搏斗中邂逅各种骨骼惊奇的傲娇报错。征服她们、通过编译同时，逐步发掘「C++」程序崩溃的真相.
+:::
+
+![](/rust/cargo.jpeg)
+
+<div align="center">
+
+[Rust启动](https://github.com/chanbengz/sustcsc-rs) | [芝士雪豹](https://sustcsc25.benx.dev)
+
+</div>
 
 ## 🔐 密码学冒险：量子怪兽来袭！
 
@@ -204,7 +77,8 @@ $$
 
 ## 🛠️ 你的战斗装备
 
-[![](https://img.shields.io/badge/Rust-1.87-orange?style=flat&logo=rust)](https://www.rust-lang.org)
+[![](https://img.shields.io/badge/Rust-1.87-orange?style=flat&logo=rust)](https://www.rust-lang.org) 
+
 [![](https://img.shields.io/badge/Rust-nightly-red?style=flat&logo=rust)](https://www.rust-lang.org)
 
 > ⚠️ 特工备忘录：
@@ -252,17 +126,17 @@ $$
 ### 🏆 挑战关卡与奖励积分（86%）
 
 | 关卡 | m (宽) | n (高) | 演化步数 | 时间挑战(s) | 奖励点数 |
-|------|--------|--------|----------|------------|----------|
-| 0    | 3      | 3      | 1        | 9.0        | 2        |
-| 1    | 5      | 5      | 1        | 13.0       | 3        |
-| 2    | 5      | 5      | 2        | 25.0       | 5        |
-| 3    | 7      | 7      | 2        | 37.0       | 7        |
-| 4    | 7      | 7      | 4        | 68.0       | 9        |
-| 5    | 8      | 10     | 4        | 105.0      | 11       |
-| 6    | 10     | 12     | 4        | 128.0      | 13       |
-| 7    | 15     | 15     | 4        | 256.0      | 17       |
-| 8    | 17     | 17     | 5        | 312.0      | 19       |
-|      |        |        |          | 终极大奖   | 86       |
+|-----|--------|--------|---------|-----------|---------|
+| 0    | 3     | 3      | 1       | 7.0       | 2       |
+| 1    | 5     | 5      | 1       | 10.0      | 3       |
+| 2    | 5     | 5      | 2       | 15.0      | 5       |
+| 3    | 7     | 7      | 2       | 21.0      | 7       |
+| 4    | 7     | 7      | 4       | 39.0      | 9       |
+| 5    | 8     | 10     | 4       | 70.0      | 11      |
+| 6    | 10    | 12     | 4       | 96.0      | 13      |
+| 7    | 15    | 15     | 4       | 128.0     | 17      |
+| 8    | 17    | 17     | 5       | 196.0     | 19      |
+|      |       |        |         | 终极大奖   | 86      |
 
 每个关卡都是一场与时间赛跑的冒险！系统会给你一个 $m \times n$ 大小的生命网格和指定的演化步数。
 只有当你的算法在时间限制内完成任务，并且`verify`函数高兴地返回`true`时，你才能获得该关卡的宝贵积分！
@@ -364,3 +238,7 @@ Rust速成魔法学院入门：https://sustcsc25.benx.dev/rustup/00-first-look.h
 - [达姆施塔特密码学学院的LWE挑战](https://www.latticechallenge.org/lwe_challenge/challenge.php) - LWE大师的试炼场
 - [Rust中的LLL实现](https://github.com/murcoutinho/LLL) - 格基规约的奥秘
 - [LWE攻击方法](https://www.maths.ox.ac.uk/system/files/attachments/lattice-reduction-and-attacks.pdf) - 破解LWE的终极宝典
+
+## 致谢
+
+本文由Claude生成，如有雷同纯属巧合。

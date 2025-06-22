@@ -82,23 +82,6 @@ onMounted(() => {
   }
   typeLine()
 
-  // 一开始就显示退出提示
-  const prompt = Object.assign(document.createElement('div'), {
-    innerText: '点击任意键继续...',
-    style: `
-      position: absolute;
-      top: 75%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      color: #0f0;
-      text-shadow: 0 0 6px rgba(0,255,0,0.7);
-      z-index: 10002;
-      opacity: 1;
-    `,
-  })
-  overlay.appendChild(prompt)
-
   function closeOverlay() {
     overlay.style.opacity = 0
     setTimeout(() => overlay.remove(), 1200)
