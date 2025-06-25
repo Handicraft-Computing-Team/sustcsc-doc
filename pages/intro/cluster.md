@@ -195,6 +195,77 @@ python my_cpu_program.py
 echo "Job finished at $(date)"
 ```
 
+## 比赛使用集群配置
+
+### 队列信息
+
+| 队列名称 | 内存 | CPU类型 | GPU类型 | 节点数 |
+|----------| ------|---------|---------|--------|
+| 8175m | 196GB | Intel Xeon Platinum 8175M @ 2.50GHz | - | 27 |
+| 8v100-32 | 32GB * 8 | Intel Xeon Platinum 8255C @ 3.80GHz | 8 * Tesla V100 32GB | 1 |
+
+### CPU配置
+
+8175m队列的CPU配置为Intel Xeon Platinum 8175M @ 2.50GHz，具有48个核心和196GB内存。该队列适合需要较大内存和多核计算的任务。更多细节请查看[官网](https://www.cpubenchmark.net/cpu.php?cpu=Intel+Xeon+Platinum+8175M+%40+2.50GHz&id=3311)。
+
+| **Category**       | **Specification**                          |
+|--------------------|--------------------------------------------|
+| **Architecture**   | x86_64 (64-bit, Little Endian)             |
+| **CPU Model**      | Intel Xeon Platinum 8175M @ 2.50GHz        |
+| **Cores/Threads**  | 2 Sockets × 24 Cores = 48 Total CPUs       |
+| **Clock Speed**    | 2.5 GHz (Base)                             |
+| **Cache**          | L1d: 32KB/core, L1i: 32KB/core             |
+|                    | L2: 1MB/core, L3: 33MB total (shared)      |
+| **NUMA**          | 2 Nodes (CPU 0-23, 24-47)                 |
+| **Virtualization** | VT-x supported                            |
+| **ISA Extensions** | AVX-512, AES-NI, SSE4.2, RDRAND, TSX, etc. |
+
+### GPU配置
+
+8v100-32队列的GPU配置为8张Tesla V100 32GB GPU，适合需要高性能计算和大规模并行处理的任务。更多细节请查看[白皮书](https://images.nvidia.com/content/technologies/volta/pdf/437317-Volta-V100-DS-NV-US-WEB.pdf)。
+
+| **Property**          | **Specification**                          |
+|-----------------------|--------------------------------------------|
+| **GPU Architecture**  | Volta (GV100)                              |
+| **FP32 Performance**  | ~15 TFLOPS (SXM2) / ~14 TFLOPS (PCIe)    |
+| **FP64 Performance**  | ~7.5 TFLOPS (SXM2) / ~7 TFLOPS (PCIe)      |
+| **Tensor Cores**      | 640 (for mixed-precision AI workloads)     |
+| **Memory (VRAM)**     | 32GB HBM2 (ECC supported)                  |
+| **Memory Bandwidth**  | 900 GB/s                                   |
+| **Memory Interface**  | 4096-bit bus                               |
+| **CUDA Cores**        | 5120                                       |
+| **Boost Clock**       | ~1530 MHz (SXM3) / ~1380 MHz (PCIe)        |
+| **TDP**               | 300W (SXM3) / 250W (PCIe)                  |
+
+### 集群拓扑
+
+| GPU  | GPU0 | GPU1 | GPU2 | GPU3 | GPU4 | GPU5 | GPU6 | GPU7 | NIC0 |
+|------|------|------|------|------|------|------|------|------|------|
+| **GPU0** | X    | NV2  | NV2  | NV1  | NV1  | SYS  | SYS  | SYS  | SYS  |
+| **GPU1** | NV2  | X    | NV1  | NV2  | SYS  | NV1  | SYS  | SYS  | SYS  |
+| **GPU2** | NV2  | NV1  | X    | NV1  | SYS  | SYS  | NV2  | SYS  | PIX  |
+| **GPU3** | NV1  | NV2  | NV1  | X    | SYS  | SYS  | SYS  | NV2  | PIX  |
+| **GPU4** | NV1  | SYS  | SYS  | SYS  | X    | NV2  | NV2  | NV1  | SYS  |
+| **GPU5** | SYS  | NV1  | SYS  | SYS  | NV2  | X    | NV1  | NV2  | SYS  |
+| **GPU6** | SYS  | SYS  | NV2  | SYS  | NV2  | NV1  | X    | NV1  | SYS  |
+| **GPU7** | SYS  | SYS  | SYS  | NV2  | NV1  | NV2  | NV1  | X    | SYS  |
+| **NIC0**| SYS  | SYS  | PIX  | PIX  | SYS  | SYS  | SYS  | SYS  | X    |
+
+> - **NV1/NV2**: NVLink连接
+> - **PIX**: PCIe连接
+> - **SYS**: 系统层级的PCIe链接，会慢于PCIe连接
+
+::: info ✅ 拓扑结构说明
+1. NVLink连接分组
+   - Group 0（GPU0–GPU3）：组内通过高速NVLink（NV1/NV2）互联（NV2速度更快），绑定到NUMA Node 0。
+   - Group 1（GPU4–GPU7）：组内同样通过NV1/NV2高速互联，绑定到NUMA Node 1。
+2. 跨组连接
+   - Group 0和Group 1之间仅通过PCIe（SYS）通信（如GPU0-GPU4），速度较慢。
+   - 避免跨组多GPU任务，否则性能会受PCIe带宽限制。
+3. 网卡（NIC0）连接
+   - 直接通过PCIe（PIX）连接到GPU2/GPU3，说明这两张GPU适合网络密集型任务（如分布式训练）。
+:::
+
 ## 常用Linux指令
 
 ### 基础配置与系统信息
