@@ -363,7 +363,7 @@ void simulate(size_t N, const char *Gates, std::complex<double> &Alpha, std::com
 
 将该文件命名为`simulate.cpp`，评测时会将其与`driver.o`中的入口函数`main`进行编译链接：
 ```bash
-icpx -std=c++17 -xHost -qopenmp -O3 simulate.cpp driver.o -o simulate
+icpx -std=c++17 -xHost -qopenmp -O3 -DNDEBUG simulate.cpp driver.o -o simulate
 ```
 `main`函数会负责读取输入并调用`simulate`函数，然后输出结果与运行时间。你只需要实现`simulate`函数。请不要尝试hack `driver.o`，最终评测使用的`driver.o`与提供的预构建二进制文件不同。
 
