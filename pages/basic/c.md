@@ -378,6 +378,7 @@ g++ -O3 gen.cpp -o gen
 ```bash
 ./simulate input.bin
 ```
+参考代码放在位于`/work/share/simulate/code-20250626`目录下。
 
 ## 样例输入
 
