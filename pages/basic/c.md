@@ -290,8 +290,8 @@ onMounted(() => {
   // 点击关闭
   overlay.addEventListener('click', closeOverlay)
   
-  // 6秒后自动关闭
-  setTimeout(closeOverlay, 6000)
+  // 2秒后自动关闭
+  setTimeout(closeOverlay, 2000)
 })
 </script>
 
@@ -430,3 +430,5 @@ source /work/share/intel/oneapi-2023.1.0/setvars.sh
 3. 希望大家思考一下如何利用CPU的并行计算能力，想到这一步就有基础分数了。
 4. 结果保留到小数点后12位，忽略+0和-0的差异。中间过程避免使用浮点数进行计算，否则可能会因为精度问题导致错误的结果（这里并不是指不能用浮点数）。该题的例程已提供了一个基于符号的计算框架。
 5. 最大规模样例输入位于`/work/share/simulate/input.bin`，对应输出`Final state: alpha = 0.000000000000 + -0.707106781187i, beta = 0.707106781187 + 0.000000000000i`。
+6. 除了提交代码`simulate.cpp`以外，还需要提交`writeup.md`描述解答思路以供审查。本题不限制AI的使用（放心我都帮你们试过了），但请在writeup里附上提示词和回答历史记录。
+
