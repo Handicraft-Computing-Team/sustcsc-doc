@@ -290,8 +290,8 @@ onMounted(() => {
   // 点击关闭
   overlay.addEventListener('click', closeOverlay)
   
-  // 6秒后自动关闭
-  setTimeout(closeOverlay, 6000)
+  // 2秒后自动关闭
+  setTimeout(closeOverlay, 2000)
 })
 </script>
 
@@ -321,6 +321,7 @@ onMounted(() => {
     sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts">
   </iframe>
 </div>
+
 
 ## 背景介绍
 ~~本人的量子计算知识已经还给老师了，如有错误请指出，不影响做题~~
@@ -363,6 +364,7 @@ void simulate(size_t N, const char *Gates, std::complex<double> &Alpha, std::com
 
 将该文件命名为`simulate.cpp`，评测时会将其与`driver.o`中的入口函数`main`进行编译链接：
 ```bash
+source /work/share/intel/oneapi-2023.1.0/setvars.sh
 icpx -std=c++17 -xHost -qopenmp -O3 simulate.cpp driver.o -o simulate
 ```
 `main`函数会负责读取输入并调用`simulate`函数，然后输出结果与运行时间。你只需要实现`simulate`函数。请不要尝试hack `driver.o`，最终评测使用的`driver.o`与提供的预构建二进制文件不同。
@@ -376,8 +378,7 @@ g++ -O3 gen.cpp -o gen
 ```bash
 ./simulate input.bin
 ```
-
-参考代码请从[这里](https://github.com/user-attachments/files/20900592/problem.zip)下载。
+参考代码放在位于`/work/share/simulate/code-20250626`目录下。
 
 ## 样例输入
 
@@ -396,21 +397,38 @@ Final state: alpha = 0.000000000000 + 0.707106781187i, beta = 0.000000000000 + 0
 
 ## 评分标准
 由于最终答案只有几种可能，为了防止大家猜答案，程序会在多组输入下进行正确性验证，若任一输入对应的结果不正确，该题不得分。
-如果你的程序通过了正确性检验，评测器将执行10个 $N=2*10^9$ 的测试用例并根据几何平均执行时间赋分。
+如果你的程序通过了正确性检验，评测器将执行10个N=2.4*10^10的测试用例并根据几何平均执行时间赋分。
 该题设置4个检查点，对应不同的考查内容，得分标准如下：
-
 | 分数 | 目标执行时间 | 目标加速比 |
-| --- | ---   | --- |
-| 0   | 17s   | 1.0 |
-| 60  | 1.7s  | 10  |
-| 80  | 1.2s  | 14  |
-| 90  | 0.9s  | 18  |
-| 100 | 0.17s | 100 |
+| --- | ---    | --- |
+| 0   | 281.56s| 1.0  |
+| 60  | 8.66s  | 32.5 |
+| 80  | 5.71s  | 49.3 |
+| 90  | 4.68s  | 60.2 |
+| 100 | 1.19s  | 236.6|
 
-如果程序执行时间`T`落在`[L, R)`区间内，对应的分数区间为`[Lo, Hi)`, 则得分的计算公式为`Lo + (Hi - Lo) * (1/T - 1/R) / (1/L - 1/R)`。（时限数据仅供参考，在新集群测试后将会更新。）
+评测时程序会在8175m队列上执行，使用的CPU为Intel Xeon Platinum 8175M @ 2.50GHz，具有48个核心（2 Sockets × 24 Cores）。你可以基于使用以下slurm作业模板提交测试任务：
+```bash
+#!/bin/bash
+#SBATCH --job-name=sustechhpc-simulate
+#SBATCH --partition=8175m          # 提交到 CPU 队列（partition 名）
+#SBATCH --nodes=1                  # 所需节点数
+#SBATCH --ntasks=1                 # 总任务数（通常 = 核心数）
+#SBATCH --cpus-per-task=48         # 每个任务使用的 CPU 核心数
+#SBATCH --time=00:10:00            # 最长运行时间（格式：hh:mm:ss）
+#SBATCH --output=slurm_%j.out      # 标准输出/错误日志（%j 会替换为作业ID）
+#SBATCH --export=NONE              # 不继承环境变量
+
+source /work/share/intel/oneapi-2023.1.0/setvars.sh
+./simulate input.bin
+```
+如果程序执行时间`T`落在`[L, R]`区间内，对应的分数区间为`[Lo, Hi]`, 则得分的计算公式为`Lo + (Hi - Lo) * (1/T - 1/R) / (1/L - 1/R)`。
 
 ## 备注
 1. 参考书籍：Quantum Computation and Quantum Information, Michael A. Nielsen, Isaac L. Chuang
 2. 这些量子门的组合有一些特殊的性质，比如HH=I，HXH=Z等。本题允许利用更多量子计算的知识进行加速，但这些不是本题的考察点，即保证不利用这些性质也能拿到满分。
 3. 希望大家思考一下如何利用CPU的并行计算能力，想到这一步就有基础分数了。
 4. 结果保留到小数点后12位，忽略+0和-0的差异。中间过程避免使用浮点数进行计算，否则可能会因为精度问题导致错误的结果（这里并不是指不能用浮点数）。该题的例程已提供了一个基于符号的计算框架。
+5. 最大规模样例输入位于`/work/share/simulate/input.bin`，对应输出`Final state: alpha = 0.000000000000 + -0.707106781187i, beta = 0.707106781187 + 0.000000000000i`。
+6. 除了提交代码`simulate.cpp`以外，还需要提交`writeup.md`描述解答思路以供审查。本题不限制AI的使用（放心我都帮你们试过了），但请在writeup里附上提示词和回答历史记录。
+
