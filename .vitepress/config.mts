@@ -21,7 +21,8 @@ export default defineConfig({
         text: '关于超算，你需要知道',
         items: [
           { text: '欢迎来到SUSTCSC！', link: '/pages/intro/welcome' },
-          { text: '集群使用指南', link: '/pages/intro/cluster' }
+          { text: '集群使用指南', link: '/pages/intro/cluster' },
+          { text: '集群账号密码查询', link: '/pages/intro/passwd' },
         ]
       },
       {
