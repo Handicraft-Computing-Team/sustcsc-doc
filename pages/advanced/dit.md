@@ -165,6 +165,25 @@ DiT在针对问题上，做出了几项比较重要的改进，才得以在扩�
 
 Diffusion扩散模型不仅仅在文生图任务中应用广泛，在目前工业大模型中，以Transformer作为骨架网络的Diffusion扩散模型也得到广泛的应用，比如在蛋白质结构预测的AlphaFold3、在VLM（Vision-Language-Model）任务中的$\pi_0$模型都采用了类似结构，对Diffusion模型的训推加速仍然是目前学术界和工业界的热门话题。
 
+### 作业脚本示例
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=dit_inference
+#SBATCH --output=dit_inference.out
+#SBATCH --error=dit_inference.err
+#SBATCH --nodes=1 
+#SBATCH --ntasks-per-node=4
+#SBATCH --gres=gpu:4
+#SBATCH --time=01:00:00
+#SBATCH --partition=8v100-32
+
+conda init
+conda activate DiT
+cd /path/to/DiT-SUSTCSC
+python sample.py
+```
+
 ### 竞赛规则
 
 1. **目标任务**  
