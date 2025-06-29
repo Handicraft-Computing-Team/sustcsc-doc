@@ -61,4 +61,6 @@ title: 培训回放链接及文件
 
 ### 29日培训链接
 
+[29日培训回放](https://meeting.tencent.com/cw/NLzRAMQp39)
+
 其中Recording 2为HGEMM培训，Recording 3为DiT培训以及Cloverleaf培训
