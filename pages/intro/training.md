@@ -15,7 +15,7 @@ title: 培训回放链接及文件
 
 <iframe src="https://chanbengz.github.io/slides/sustcsc-rs" width="800" height="600" style="border: none;"></iframe>
 
-[Cloverleaf](/ppt/cloverleaf)
+<!-- [Cloverleaf](/ppt/cloverleaf) -->
 
 ### 进阶赛道
 
