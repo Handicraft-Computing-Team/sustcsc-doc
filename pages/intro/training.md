@@ -8,12 +8,24 @@ title: 培训回放链接及文件
 
 [Basic](/ppt/basic.pdf)
 
-<iframe src="../../ppt/basic.pdf" width="800" height="450" style="border: none;"></iframe>
+<div style="width:100%; aspect-ratio:16/9; max-width:1000px; margin:auto;">
+  <iframe 
+    src="../../ppt/basic.pdf" 
+    style="width:100%; height:100%; border:none; display:block;"
+    allowfullscreen
+  ></iframe>
+</div>
 
 ### 基础赛道
 [Rust PPT](https://chanbengz.github.io/slides/sustcsc-rs)
 
-<iframe src="https://chanbengz.github.io/slides/sustcsc-rs" width="800" height="600" style="border: none;"></iframe>
+<div style="width:100%; aspect-ratio:16/9; max-width:1000px; margin:auto;">
+  <iframe 
+    src="https://chanbengz.github.io/slides/sustcsc-rs" 
+    style="width:100%; height:100%; border:none; display:block;"
+    allowfullscreen
+  ></iframe>
+</div>
 
 <!-- [Cloverleaf](/ppt/cloverleaf) -->
 
@@ -21,11 +33,23 @@ title: 培训回放链接及文件
 
 [HGEMM](/ppt/hgemm.pdf)
 
-<iframe src="../../ppt/hgemm.pdf" width="800" height="450" style="border: none;"></iframe>
+<div style="width:100%; aspect-ratio:16/9; max-width:1000px; margin:auto;">
+  <iframe 
+    src="../../ppt/hgemm.pdf" 
+    style="width:100%; height:100%; border:none; display:block;"
+    allowfullscreen
+  ></iframe>
+</div>
 
 [DiT](/ppt/dit.pdf)
 
-<iframe src="../../ppt/dit.pdf" width="800" height="450" style="border: none;"></iframe>
+<div style="width:100%; aspect-ratio:16/9; max-width:1000px; margin:auto;">
+  <iframe 
+    src="../../ppt/dit.pdf" 
+    style="width:100%; height:100%; border:none; display:block;"
+    allowfullscreen
+  ></iframe>
+</div>
 
 ## 培训回放
 
