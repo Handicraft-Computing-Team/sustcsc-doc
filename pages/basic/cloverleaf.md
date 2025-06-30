@@ -1058,7 +1058,7 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，AOCC 编译器作为 bonus，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
 
 1. 进入 [AMD AOCC 官网](https://www.amd.com/en/developer/aocc.html)，下载最新版本的 AOCC 编译器。
-![](/images/aocc-download.png)
+![](/images/aocc_download.png)
 2. 解压下载的压缩包，并进入解压后的目录。
 ```bash
 tar -xvf aocc-compiler-5.0.0.tar
