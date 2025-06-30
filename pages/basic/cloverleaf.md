@@ -673,7 +673,7 @@ OpenMP 版本不匹配
 
 ### 编译
 
-首先，登录在超算平台的账号，下载[压缩包](/release/CloverLeaf20250622.tar.gz)，进入根目录。
+首先，登录在超算平台的账号，下载[压缩包](/release/CloverLeaf20250622.tar.gz)，使用命令 `tar -xzvf CloverLeaf20250622.tar.gz` 解压后进入根目录。
 
 然后，使用 `module load ...` 指令来用指定的编译器来编译 CloverLeaf。你可以使用 `module avail` 来查看平台上可用的编译器及相关库。当然，你也可以选择自己安装喜欢的编译器版本（我们强烈鼓励这种做法！）
 
@@ -692,9 +692,11 @@ OpenMP 版本不匹配
 #SBATCH --job-name=cloverleaf
 #SBATCH --output=%j.out
 #SBATCH --error=%j.err
-#SBATCH --ntasks=32            # 可以更改
-#SBATCH --ntasks-per-node=16   # 可以更改
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
+
+# 注意：比赛环境为 2 节点，每节点 48 核
 
 lscpu
 
@@ -1037,6 +1039,17 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 ## 说明与致谢
 
 本赛题为南方科技大学 2025 年超算比赛基础赛道编译优化赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。同时，[GitHub 仓库](https://github.com/Charley-xiao/tempestissimo) 已开放讨论区，欢迎大家在此讨论与交流。如有任何问题，请提出 issue 或联系 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 出题人：[Charley-xiao](https://github.com/Charley-xiao).
+
+## 附录：基准时间参考
+
+基准设置：2 节点，每节点 48 tasks，每 task 2 threads.
+
+| 算例 \ 参考时间 | GNU | Intel | AOCC |
+|:----------------:|:---:|:-----:|:----:|
+| case 1 | 372.87113213539124 s | 敬请期待 | -- |
+| case 2 | 5.7374670505523682 s | -- | -- |
+
+---
 
 <img src="/images/hikari.png" />
 
