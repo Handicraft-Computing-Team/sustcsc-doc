@@ -214,7 +214,7 @@ ln -sf /your_path/WRFV4.4/run/ozone* .
 
 ```shell
 mv namelist.input namelist.input.backup
-cp /public_share/namelist.input.test /your_path/conus12km/namelist.input
+cp namelist.input.test /your_path/conus12km/namelist.input
 ```
 
 提交相应的作业脚本至计算节点：
@@ -226,7 +226,7 @@ bsub -m "b08u37a b08u37b b08u38a b08u38b" < cpu_job.lsf # 以四节点为例
 等待若干时间，作业完成后会在当前目录下生成`rsl.out.*`输出文件，我们可以通过展示rsl.out.0000内的结果来判断WRF模型计算是否成功：
 
 ```shell
-tail -n1 /rsl.out.0000
+tail -n1 ./rsl.out.0000
 ```
 
 若出现`wrf: SUCCESS COMPLETE WRF`字样则说明测试通过，WRF模型运行成功，我们也会在当前目录下找到如`wrfout_d01_`开头的文件。
@@ -266,12 +266,12 @@ Average 'Timing for main': 97.23 seconds
 
 这说明WRF模型在每个时间步上模拟平均耗时为97.23秒，我们赛题的最终目标就是将这个用时减少，即评估WRF每时间步的用时，用时越少得分越高。
 
-不过，更重要的是在模拟时间减少的同时，我们也需要确保计算结果是收敛/正确的。如果时间减少了，但模拟结果是错误的，这道题将会得零分。因此我们还需要对计算结果进行验证，即比较实际计算结果与参考计算结果之间的误差。这里我们对WRF模型中三个重要物理量：温度和压力的组合（称为潜在温度”theta“）、水分（混合比”qv“）和水平风的分量（从左到右，而不是从西到东”u“）进行方差分析测试
+不过，更重要的是在模拟时间减少的同时，我们也需要确保计算结果是收敛/正确的。如果时间减少了，但模拟结果是错误的，这道题将会得零分。因此我们还需要对计算结果进行验证，即比较实际计算结果与参考计算结果之间的误差。这里我们对WRF模型中三个重要物理量：温度和压力的组合（称为潜在温度”theta“）、水分（混合比”qv“）和水平风的分量（从左到右，而不是从西到东”u“）进行方差分析：
 
 ```shell
-chmod +x wrf_timing.sh #这个命令只需执行一次
+chmod +x wrf_verify.sh #这个命令只需执行一次
 
-./wrf_timing.sh rsl.out.0000
+./wrf_verify.sh rsl.out.0000
 ```
 
 运行成功后我们可以在终端看到以下信息：
@@ -297,7 +297,7 @@ tar -xvf conus2.5km.tar.gz && cd conus2.5km
 然后将编译好的wrf.exe及其他运行所需文件链接至算例文件路径中，和教程里的步骤一致，再将参考的namelist.input.conus2.5替换原本的namelist.input：
 
 ```shell
-cp /public_share/namelist.input.conus2.5 /your_path/conus12km/namelist.input
+cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 ```
 
 最后在模拟结果正确的情况下，通过对 rsl.out.0000 输出文件中每个时间步的 WRF 计算时间求平均值来测量结果。注意文件读取/写入期间的时间不包括在平均值中。然后提交以下几个文件作为结果：
@@ -326,9 +326,9 @@ cp /public_share/namelist.input.conus2.5 /your_path/conus12km/namelist.input
 
 - `nproc_x` 和 `nproc_y` 控制 MPI 排序（以及它们的排列方向）。
 
-对于 MPI 分解，水平分解的任一方向（x 或 y）上的格点数都不能小于 10。MPI 进程的总数等于 `nproc_x * nproc_y`。例如，要使用 40 个总进程，你可以选择 20 个 MPI 进程，每个 MPI 进程运行 2 个 OpenMP 线程。
+对于 MPI 分解，水平分解的任一方向（x 或 y）上的格点数都不能小于 10。MPI 进程的总数等于 `nproc_x * nproc_y`。例如，要使用 96 个总进程，你可以选择 48 个 MPI 进程，每个 MPI 进程运行 2 个 OpenMP 线程。
 
-- 在 20 个 MPI 进程中，你可以在南北方向上进行 20 列分解、西东方向上进行 1 列分解（或 10×2、5×4、4×5、2×10、1×20 等组合）。
+- 在 48 个 MPI 进程中，你可以在南北方向上进行 48 列分解、西东方向上进行 1 列分解（或 24×2、16x3、12×4、8x6、6×8、4x12、3x16、2×24、1×48 等组合）。
 - 对于 OpenMP 线程（由 `numtiles_x` 和 `numtiles_y` 控制），你同样可以选择线程的排列方式。例如，对于两个线程，你可以设置 `numtiles_x=1, numtiles_y=2`（或 2×1）。
 
 仅就 MPI 与 OpenMP 选项的组合而言，就存在巨大的性能调优空间。因此，你可以尝试修改（也仅可修改）`namelist.input` 文件的 `&domains` 部分，测试不同的MPI与OpenMP组合，来获得更好的运行性能，最终使得WRF模型模拟时间减少。
