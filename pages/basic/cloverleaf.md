@@ -1088,6 +1088,12 @@ export PATH=<你想安装到的目录>/openmpi-aocc/bin:$PATH
 which mpicc
 ```
 
+在使用时，执行：
+```bash
+export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
+```
+
 ---
 
 <img src="/images/hikari.png" />
