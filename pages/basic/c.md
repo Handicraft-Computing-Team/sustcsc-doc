@@ -427,7 +427,7 @@ source /work/share/intel/oneapi-2023.1.0/setvars.sh
 ## 备注
 1. 参考书籍：Quantum Computation and Quantum Information, Michael A. Nielsen, Isaac L. Chuang
 2. 这些量子门的组合有一些特殊的性质，比如HH=I，HXH=Z等。本题允许利用更多量子计算的知识进行加速，但这些不是本题的考察点，即保证不利用这些性质也能拿到满分。
-3. 希望大家思考一下如何利用CPU的并行计算能力，想到这一步就有基础分数了。
+3. 希望大家思考一下如何利用CPU的并行计算能力，想到这一步就有基础分数了。编译选项里的`-qopenmp`表示开启了OpenMP支持，你可以使用OpenMP来实现多线程并行计算。OpenMP的使用方法可以参考[OpenMP Tutorial](https://engineering.purdue.edu/~smidkiff/ece563/files/ECE563OpenMPTutorial.pdf)。其它的多线程计算的方法不一定保证支持（pthread/std::thread），但只要程序能过编译都是可以用的（你想的话也可以手写syscall）。
 4. 结果保留到小数点后12位，忽略+0和-0的差异。中间过程避免使用浮点数进行计算，否则可能会因为精度问题导致错误的结果（这里并不是指不能用浮点数）。该题的例程已提供了一个基于符号的计算框架。
 5. 最大规模样例输入位于`/work/share/simulate/input.bin`，对应输出`Final state: alpha = 0.000000000000 + -0.707106781187i, beta = 0.707106781187 + 0.000000000000i`。
 6. 除了提交代码`simulate.cpp`以外，还需要提交`writeup.md`描述解答思路以供审查。本题不限制AI的使用（放心我都帮你们试过了），但请在writeup里附上提示词和回答历史记录。
