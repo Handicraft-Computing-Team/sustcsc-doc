@@ -475,6 +475,10 @@ Terminated with exit code 137
 
 ## 第一幕：竞赛概览
 
+::: info 本幕更改日志
+2025/6/30：修复了错误的评分计算方式，更改四样例为两样例。
+:::
+
 ### 简介
 
 [CloverLeaf](https://uk-mac.github.io/CloverLeaf/) 是一个迷你应用程序，它模拟大型流体力学运算中的显式二阶精确方法求解 2D 笛卡尔网格上可压缩欧拉方程的过程。它采用交错网格存储数据，每个单元存储三个值：能量、密度和压力，速度矢量存储在每个单元角。CloverLeaf 由沃里克大学，布里斯托大学，及及一些其他机构的研究者共同开发，是用于检测超级计算系统扩展性瓶颈和性能可移植性的代表性程序之一。
@@ -518,9 +522,9 @@ Terminated with exit code 137
 
 ### 竞赛目标
 
-本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了四个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 LLVM/AOCC 为附加 bonus。
+本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了两个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 LLVM/AOCC 为附加 bonus。
 
-参赛队伍需要在 2 台 40 核心的计算节点上完成制定算力的评测，用于计分的指标是问题求解时间，即程序输出的 `clover.out` 最后 1 个 Wall clock.
+参赛队伍需要在 2 台计算节点上完成制定算力的评测，用于计分的指标是问题求解时间，即程序输出的 `clover.out` 最后 1 个 Wall clock.
 
 ### 规则
 
@@ -531,9 +535,8 @@ Terminated with exit code 137
 - **输入/输出要求**：不得修改输入、输出文件（`*.in`、`*.out`），输出文件的内容与格式须与参考代码完全一致。  
 
 #### 测试规则
-- **运行环境**：在竞赛指定计算平台运行，规模≤ 2 个计算节点、≤ 256 核心，程序运行时间≤ 30 分钟。  
-- **参数要求**：禁止修改 `edgefactor`（固定为 16）；可调整 `SCALE` 参数，允许值：`27、28、29、64`，需按 BFS 顺序依次执行，不得并行运行多个 BFS，亦不得跳过验证。  
-- **测试算例**：共 4 个算例，输入文件位于参考代码 `cases` 目录，不得修改 `clover.in`。  
+- **运行环境**：在竞赛指定计算平台运行，规模≤ 2 个计算节点、无最多核心要求，程序运行时间≤ 30 分钟。  
+- **测试算例**：共 2 个算例，输入文件位于参考代码 `cases` 目录，不得修改 `clover.in`。  
 
 #### 正确性验证
 - 组委会以参考 `clover.out` 为基准验证：计算过程中 **Volume** 与 **Mass** 保持不变，最终 **Kinetic Energy** 与参考值偏差 ≤ ±0.1 %。  
@@ -543,7 +546,7 @@ Terminated with exit code 137
 
 #### 性能分数
 - 性能指标 **A<sub>CL</sub>**（单位：秒）取自 `clover.out` 最后一行 **"Wall clock"**。   
-- 设算例 *i* 的得分为 *M<sub>CL,i</sub>*，则 $M_{CL,i}=B\times\frac{A_{CL,\min}}{A_{CL,i}}$.
+- 设算例 *i* 的得分为 *M<sub>CL,i</sub>*，则 $M_{CL,i}=B\times\frac{A_{CL,i}}{A_{CL,\min}}$.
 - 性能总分为各编译器得到的性能分数之和，GNU 及 Intel 的 B 值为 10，而其他编译器（作为 bonus）的 B 值为 4.
 - 若 **违反规则、无法复现、篡改输出或恶意利用 Bug**，性能分数记 **0 分**。  
 
@@ -571,35 +574,23 @@ Terminated with exit code 137
 
 所有提交都需要遵循以下格式。
 
-- **`CloverLeaf-2D/src`**  
-  完整源代码，供组委会运行验证；附加说明请写在根目录 **README**。 
+- **`CloverLeaf-2D/`** 以及各个编译器的运行脚本 **`job_<compiler>.slurm`**  
+  完整源代码以及作业脚本，供组委会运行验证；附加说明请写在根目录 **README**。 
 
-- **`CloverLeaf-2D/results/case<1-4>/*`** （赛中可不包含）  
+- **`CloverLeaf_SCC/results/<compiler>/case<1-2>/*`** （赛中可不包含）  
   每算例需包含：  
   - `clover.out`  
   - 作业脚本  
   - 作业调度系统输出  
-  - **使用 bsub**：需提供  
+  - **使用 sbatch**：需提供  
     - `clover.out`  
     - 1 个 shell 脚本  
     - 标准输出 `<JobID>.out`  
     - 错误输出 `<JobID>.err`  
-    文件名中必须含 **LSF Job ID**。  
+    文件名中必须含 **Slurm Job ID**。  
 
-- **`CloverLeaf-2D/results/report.pdf`** （赛中可不包含）  
+- **`CloverLeaf_SCC/results/report.pdf`** （赛中可不包含）  
   工程报告（可为 docx 或 pdf）。
-
-<!-- ### 赛中评测
-
-赛中评测仅评测性能分数。
-
-赛中评测会集中在每周二、五进行，评测结果与榜单会在微信群中公布。请将压缩包命名为 `teamname.tar.gz`，其中 `teamname` 为队名，并作为附件发送邮件至 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 评测结束后，评测组会将评测结果与榜单在微信群中公布。请注意，评测组不会提供任何评测反馈。每次评测只会去每队的最新提交进行评测，若有多次提交，非最新的提交不会被评测，请确保最新提交的压缩包符合要求。
-
-在每次赛中评测结束后，第一名的队伍将在**最终性能分数**获得 +2% 的分数加成，第二名 +1.5%，第三名 +1%. （可叠加）
-
-### 赛后评测
-
-赛后评测会在比赛结束后进行，比赛最后的分数会在微信群中以及通过邮件公布。请在比赛结束前，将压缩包命名为 `teamname_final.tar.gz`，其中 `teamname` 为队名，并作为附件发送邮件至 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). -->
 
 ## 第二幕：崩落的界域
 
@@ -684,7 +675,7 @@ OpenMP 版本不匹配
 
 首先，登录在超算平台的账号，下载[压缩包](/release/CloverLeaf20250622.tar.gz)，进入根目录。
 
-然后，使用 `module load ...` 指令来用指定的编译器来编译 CloverLeaf。你可以使用 `module avail` 来查看平台上可用的编译器及相关库。
+然后，使用 `module load ...` 指令来用指定的编译器来编译 CloverLeaf。你可以使用 `module avail` 来查看平台上可用的编译器及相关库。当然，你也可以选择自己安装喜欢的编译器版本（我们强烈鼓励这种做法！）
 
 最后，可以选择修改 Makefile 中的各个选项，并使用 `make COMPILER=...` 来进行编译。编译成功后，会看到当前目录下有名为 `clover_leaf` 的可执行文件。
 
@@ -701,14 +692,14 @@ OpenMP 版本不匹配
 #SBATCH --job-name=cloverleaf
 #SBATCH --output=%j.out
 #SBATCH --error=%j.err
-#SBATCH --ntasks=32
-#SBATCH --ntasks-per-node=16
-#SBATCH --cpus-per-task=2
+#SBATCH --ntasks=32            # 可以更改
+#SBATCH --ntasks-per-node=16   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
 
 lscpu
 
 source ~/.bashrc
-source /work/share/intel/oneapi-2023.1.0/setvars.sh
+source /work/share/intel/oneapi-2023.1.0/setvars.sh # 可以更改
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
 export OMP_PLACES=cores
