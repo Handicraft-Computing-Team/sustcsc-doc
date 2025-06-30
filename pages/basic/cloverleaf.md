@@ -1040,14 +1040,53 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 本赛题为南方科技大学 2025 年超算比赛基础赛道编译优化赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。同时，[GitHub 仓库](https://github.com/Charley-xiao/tempestissimo) 已开放讨论区，欢迎大家在此讨论与交流。如有任何问题，请提出 issue 或联系 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 出题人：[Charley-xiao](https://github.com/Charley-xiao).
 
-## 附录：基准时间参考
+## 附录一：基准时间参考
 
 基准设置：2 节点，每节点 48 tasks，每 task 2 threads.
 
+::: warning 注意
+基准时间可能会更新。
+:::
+
 | 算例 \ 参考时间 | GNU | Intel | AOCC |
 |:----------------:|:---:|:-----:|:----:|
-| case 1 | 372.87113213539124 s | 敬请期待 | -- |
-| case 2 | 5.7374670505523682 s | -- | -- |
+| case 1 | 372.87113213539124 s | 964.90631699562073 s | -- |
+| case 2 | 5.7374670505523682 s | 15.343785047531128 s | -- |
+
+## 附录二：安装 AOCC 编译器
+
+AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，AOCC 编译器作为 bonus，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
+
+1. 进入 [AMD AOCC 官网](https://www.amd.com/en/developer/aocc.html)，下载最新版本的 AOCC 编译器。
+![](/images/aocc-download.png)
+2. 解压下载的压缩包，并进入解压后的目录。
+```bash
+tar -xvf aocc-compiler-5.0.0.tar
+cd aocc-compiler-5.0.0
+./install.sh
+```
+3. 这会生成一个 `setenv_AOCC.sh` 脚本，用于设置 AOCC 编译器的环境变量。
+4. 运行下面的命令以加载环境变量，然后就可以使用 AOCC 编译器进行编译了。
+```bash
+source setenv_AOCC.sh
+```
+5. 下载 OpenMPI 5.0.8 并解压进入目录。
+```bash
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
+tar -xvzf openmpi-5.0.8.tar.gz
+cd openmpi-5.0.8
+```
+6. 启用 AOCC 编译器。
+```bash
+./configure CC=clang CXX=clang++ FC=flang \
+            --with-wrapper-cc=clang \
+            --with-wrapper-cxx=clang++ \
+            --with-wrapper-fc=flang \
+            --prefix=<你想安装到的目录>/openmpi-aocc
+make -j && make install
+export PATH=<你想安装到的目录>/openmpi-aocc/bin:$PATH
+which mpicc
+```
 
 ---
 
