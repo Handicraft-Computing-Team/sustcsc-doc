@@ -1038,7 +1038,13 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 ## 说明与致谢
 
-本赛题为南方科技大学 2025 年超算比赛基础赛道编译优化赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。同时，[GitHub 仓库](https://github.com/Charley-xiao/tempestissimo) 已开放讨论区，欢迎大家在此讨论与交流。如有任何问题，请提出 issue 或联系 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 出题人：[Charley-xiao](https://github.com/Charley-xiao).
+本赛题为南方科技大学 2025 年超算比赛基础赛道编译优化赛题。本赛题所有资源遵循 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) 协议，允许非商业性使用与修改。。如有任何问题，请提出 issue 或联系 [12211634@mail.sustech.edu.cn](mailto:12211634@mail.sustech.edu.cn). 出题人：[Charley-xiao](https://github.com/Charley-xiao).
+
+## 故障排除
+
+### 从源码安装 OpenMPI 时，`./configure` 报错 `working directory cannot be determined`
+
+目前尚不清楚原因。可以手动将所有 `configure` 脚本中的 `working directory` 相关行注释掉。一个可以成功 `./configure` 的版本发布在这个路径下 `/work/share/software/openmpi-5.0.8.tar.bz2`，可以使用 `cp` 指令进行复制，并使用指令 `tar -xvjf openmpi-5.0.8.tar.bz2` 进行解压。同时，敬请耐心等候组委会修复。
 
 ## 附录一：基准时间参考
 
