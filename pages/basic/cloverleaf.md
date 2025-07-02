@@ -697,6 +697,8 @@ OpenMP 版本不匹配
 #SBATCH --cpus-per-task=2      # 可以更改
 
 # 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
 
 lscpu
 
@@ -1048,7 +1050,7 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 ## 附录一：基准时间参考
 
-基准设置：2 节点，每节点 48 tasks，每 task 2 threads.
+基准设置：2 节点，每节点 24 tasks，每 task 2 threads.
 
 ::: warning 注意
 基准时间可能会更新。
