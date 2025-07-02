@@ -671,6 +671,10 @@ OpenMP 版本不匹配
 
 ## 幕间：快速上手
 
+::: info 本幕更改日志
+2025/7/2：更改了作业脚本 `job.slurm`，使其不继承环境变量，同时增加了对部分参数的说明。
+:::
+
 ### 编译
 
 首先，登录在超算平台的账号，下载[压缩包](/release/CloverLeaf20250622.tar.gz)，使用命令 `tar -xzvf CloverLeaf20250622.tar.gz` 解压后进入根目录。
@@ -695,6 +699,7 @@ OpenMP 版本不匹配
 #SBATCH --ntasks=48            # 可以更改
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=NONE
 
 # 注意：比赛环境为 2 节点，每节点 48 核
 # 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
@@ -703,7 +708,7 @@ OpenMP 版本不匹配
 lscpu
 
 source ~/.bashrc
-source /work/share/intel/oneapi-2023.1.0/setvars.sh # 可以更改
+source /work/share/intel/oneapi-2023.1.0/setvars.sh # 可以更改，但是需要和编译的时候使用的一致
 
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
 export OMP_PLACES=cores
@@ -1058,12 +1063,12 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 \ 参考时间 | GNU | Intel | AOCC |
 |:----------------:|:---:|:-----:|:----:|
-| case 1 | 372.87113213539124 s | 964.90631699562073 s | -- |
-| case 2 | 5.7374670505523682 s | 15.343785047531128 s | -- |
+| case 1 | 372.87113213539124 s | 375.285696983337 s | -- |
+| case 2 | 5.7374670505523682 s | 5.81983780860901 s | -- |
 
 ## 附录二：安装 AOCC 编译器
 
-AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，AOCC 编译器作为 bonus，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
+AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，由于集群全部为 Intel 节点而不是 AMD，AOCC 编译器的表现可能不如预期，所以作为 bonus，可选做，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
 
 1. 进入 [AMD AOCC 官网](https://www.amd.com/en/developer/aocc.html)，下载最新版本的 AOCC 编译器。
 ![](/images/aocc_download.png)
@@ -1101,6 +1106,110 @@ which mpicc
 export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
 export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
 ```
+
+## 附录三：保姆级教程
+
+### 使用 Intel oneAPI
+
+Intel oneAPI 已经在集群上装好，使用以下指令来加载环境变量：
+
+```bash
+source /work/share/intel/oneapi-2023.1.0/setvars.sh
+```
+
+此时运行
+
+```bash
+which mpicc
+```
+
+应得到
+
+```
+/work/share/intel/oneapi-2023.1.0/mpi/2021.9.0/bin/mpicc
+```
+
+说明 Intel MPI 的可执行文件已经排在 `PATH` 前列。
+
+接着进入 `CloverLeaf_SCC/` 并编译：
+
+```bash
+make COMPILER=INTEL MPI_COMPILER=mpiifort C_MPI_COMPILER=mpiicc
+```
+
+然后提交任务：
+
+```bash
+sbatch job.slurm
+```
+
+**注意**：该集群目前提供的 oneAPI 版本较旧（2023.1，对应 Intel MPI 2021.9），因此**只包含经典封装器** `mpiicc/mpiicpc/mpiifort`，**还不支持** `mpiicx/mpiicpx/mpiifx`。`mpiicc` 与 `mpiicx` 的区别如下：
+
+| 封装器      | 默认后端                                                                              | 是否继续维护                 |
+| -------- | -------------------------------------------------------------  | ---------------------- | 
+| `mpiicc` | **`icc`**（经典 Intel C 编译器） | **仍在**，但被标记为 *classic* |
+| `mpiicx` | **`icx`**（LLVM-based Intel C 编译器）                              | **主推**                 |
+
+`mpiicc` 识别所有 *classic ICC* 特有参数；`-xCORE-AVX512` 等写法对 `mpiicx` 不一定成立。`mpiicx` 支持标准 LLVM/Clang 选项，如 `-march=native`、`-flto=full`，并能与 `-fsanitize`、`-fprofile-generate/use` 等现代工具链联动。
+
+Intel 已宣布 classic 编译器将在 oneAPI 2027（暂定）后停止更新安全补丁；届时只剩 `icx/ifx`。因此官方推荐新项目直接用 `mpiicx`/`mpiifx`，老项目逐步迁移。
+
+对大多数 HPC 内核，两者生成的代码性能非常接近；不过 `icx` 在自动向量化与 OpenMP 5.x 支持上更活跃。若需使用最新 `-qnextgen` 自动并行特性或改进版 OpenMP Offload，务必切到 `mpiicx`。
+
+目前，组委会正在安装更新版本的 oneAPI 以确保大家能用上最新的 `mpiicx`/`mpiifx`。如果不想等待，你也可以自行安装最新版本。届时，编译 CloverLeaf 的指令将变为：
+
+```bash
+make COMPILER=INTEL MPI_COMPILER=mpiifx C_MPI_COMPILER=mpiicx
+```
+
+基准时间也将相应发生改变，敬请关注。
+
+提交任务后，会显示 `Submitted batch job <xxx>`，其中 `<xxx>` 是任务 ID。你可以使用 `squeue` 查看任务状态，或使用 `sacct -j <xxx>` 查看任务详情。
+
+通过 `cat <xxx>.out`，你可以查看任务输出结果。若任务成功完成，输出文件中会显示类似以下内容：
+
+```
+=== Correctness Check ===
+Num proc: 48
+
+? Case 1  : Simulating...
+
+Clover Version    1.300
+       MPI Version
+    OpenMP Version
+   Task Count     48
+ Thread Count:     2
+
+ Output file clover.out opened. All output will go there.
+   ✔ Passed  (ref=8.0560000000e-02, out=8.0560000000e-02, eps=0.0000%)
+   ⏱  Wall clock = 375.285696983337s
+
+? Case 2  : Simulating...
+
+Clover Version    1.300
+       MPI Version
+    OpenMP Version
+   Task Count     48
+ Thread Count:     2
+
+ Output file clover.out opened. All output will go there.
+   ✔ Passed  (ref=3.0750000000e-01, out=3.0750000000e-01, eps=0.0000%)
+   ⏱  Wall clock = 5.81983780860901s
+
+=== Summary ===
+Passed: 2, Failed: 0
+
+Wall clock per case:
+  Case 1  : 375.285696983337 s
+  Case 2  : 5.81983780860901 s
+✅ All cases passed within 0.5% tolerance.
+```
+
+如果最后显示 `All cases passed within 0.5% tolerance.`，则表示你的代码通过了所有测试用例。那么恭喜你，接下来的任务就是做性能分析以及优化了！祝你好运！
+
+### 使用 GNU 编译器
+
+施工中...
 
 ---
 
