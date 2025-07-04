@@ -316,21 +316,21 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 
 ```shell
 &domains  
-  numtiles_x =  0  
-  numtiles_y =  0  
+  tile_sz_x  =  0  
+  tile_sz_y  =  0  
   nproc_x    = -1  
   nproc_y    = -1  
 /  
 ```
 
-- `numtiles_x` 和 `numtiles_y` 控制每个 MPI 进程中使用的 OpenMP 线程数量（以及它们的排列方向）。
+- `tile_sz_x` 和 `tile_sz_y` 控制每个 MPI 进程中使用的 OpenMP 线程数量（以及它们的排列方向）。
 
 - `nproc_x` 和 `nproc_y` 控制 MPI 排序（以及它们的排列方向）。
 
 对于 MPI 分解，水平分解的任一方向（x 或 y）上的格点数都不能小于 10。MPI 进程的总数等于 `nproc_x * nproc_y`。例如，要使用 96 个总进程，你可以选择 48 个 MPI 进程，每个 MPI 进程运行 2 个 OpenMP 线程。
 
 - 在 48 个 MPI 进程中，你可以在南北方向上进行 48 列分解、西东方向上进行 1 列分解（或 24×2、16x3、12×4、8x6、6×8、4x12、3x16、2×24、1×48 等组合）。
-- 对于 OpenMP 线程（由 `numtiles_x` 和 `numtiles_y` 控制），你同样可以选择线程的排列方式。例如，对于两个线程，你可以设置 `numtiles_x=1, numtiles_y=2`（或 2×1）。
+- 对于 OpenMP 线程（由 `tile_sz_x` 和 `tile_sz_y` 控制），你同样可以选择线程的排列方式。例如，对于两个线程，你可以设置 `tile_sz_x=1, tile_sz_y=2`（或 2×1）。
 
 仅就 MPI 与 OpenMP 选项的组合而言，就存在巨大的性能调优空间。因此，你可以尝试修改（也仅可修改）`namelist.input` 文件的 `&domains` 部分，测试不同的MPI与OpenMP组合，来获得更好的运行性能，最终使得WRF模型模拟时间减少。
 
