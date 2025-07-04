@@ -204,6 +204,7 @@ tar -xvf conus12km.tar.gz && cd conus12km
 
 ```shell
 ln -s /your_path/WRFV4.4/main/wrf.exe ./wrf.exe
+ln -s /your_path/WRFV4.4/run/CAMtr_volume_mixing_ratio .
 ln -sf /your_path/WRFV4.4/run/CAMtr_volume_mixing_ratio.* .
 ln -sf /your_path/WRFV4.4/run/*_DATA .
 ln -sf /your_path/WRFV4.4/run/*TBL .
