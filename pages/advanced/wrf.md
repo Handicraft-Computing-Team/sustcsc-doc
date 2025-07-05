@@ -272,7 +272,7 @@ Average 'Timing for main': 97.23 seconds
 ```shell
 chmod +x wrf_verify.sh #这个命令只需执行一次
 
-./wrf_verify.sh wrfout_d01_2019-11-26_18\:10\:00.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时大约7分钟
+./wrf_verify.sh wrfout_d01_2019-11-26_18\:10\:00.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
 ```
 
 运行成功后我们可以在终端看到以下信息：
@@ -360,6 +360,34 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 - 对于 OpenMP 线程（由 `numtiles` 控制），你可以选择每个MPI进程中的线程数。例如，对于每个MPI进程有两个线程，你可以设置 `numtiles=2`。
 
 仅就 MPI 与 OpenMP 选项的组合而言，就存在巨大的性能调优空间。因此，你可以尝试修改（也仅可修改）`namelist.input` 文件的 `&domains` 部分，测试不同的MPI与OpenMP组合，来获得更好的运行性能，最终使得WRF模型模拟时间减少。
+
+请注意，为了支持MPI+OpenMP混合运行方式，你需要对作业脚本进行相关修改，例如（以numtiles=2为例）：
+
+```shell
+#!/bin/bash
+#BSUB -q ssc-cpu
+#BSUB -n 96
+#BSUB -e %J.err
+#BSUB -o %J.out
+#BSUB -R "span[ptile=24]"
+
+hostfile=`echo $LSB_DJOB_HOSTFILE`
+NP=`cat $hostfile | wc -l`
+cd $LS_SUBCWD
+
+module load openmpi/4.1.1_gcc-8.5.0
+module load netcdf-c/4.7.1_gcc-8.5.0
+module load netcdf-fortran/4.4.5_gcc-8.5.0
+
+numtiles=2  # number of OpenMP threads per MPI task
+ppr=$(($NP/4/$numtiles))
+real_np=$(($NP/$numtiles))
+
+# OpenMP settings:
+export OMP_NUM_THREADS=$numtiles
+
+time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map-by ppr:$ppr:node:pe=$numtiles ./wrf.exe
+```
 
 最终的提交结果为我们能找到的最佳MPI与OpenMP组合的结果：
 
