@@ -272,16 +272,44 @@ Average 'Timing for main': 97.23 seconds
 ```shell
 chmod +x wrf_verify.sh #这个命令只需执行一次
 
-./wrf_verify.sh rsl.out.0000
+./wrf_verify.sh wrfout_d01_2019-11-26_18\:10\:00.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时大约7分钟
 ```
 
 运行成功后我们可以在终端看到以下信息：
 
 ```shell
-# 待完善
+Processing variable: qv (using QVAPOR)
+compiler comparison for qv
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176399998
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
+
+Processing variable: u (using U)
+compiler comparison for u
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176517598
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
+
+Processing variable: theta (using T)
+compiler comparison for theta
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176399998
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
 ```
 
-则说明WRF模型的模拟结果正确，时间成绩有效。
+当三个物理量的误差分析都出现“We are pretty darn confident that the vendor vs exemplar comparisons are OK”，则说明WRF模型的模拟结果正确，时间成绩有效。
 
 ## 赛题任务要求
 
