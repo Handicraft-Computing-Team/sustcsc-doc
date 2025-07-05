@@ -315,7 +315,7 @@ We are pretty darn confident that the vendor vs exemplar comparisons are OK
 
 ### a（20分）
 
-在正式比赛中我们使用conus 2.5 km数据集对 WRF进行基准测试，这里你需要先下载数据集：
+在正式比赛中我们使用conus 2.5 km数据集对 WRF进行基准测试，且只在4个CPU节点上运行（包括最终的时间结果仅考虑4个CPU节点上的运行结果）。这里你需要先下载数据集：
 
 ```shell
 wget https://tqi-public.s3.us-east-2.amazonaws.com/datasets/v2/conus2.5km.tar.gz
