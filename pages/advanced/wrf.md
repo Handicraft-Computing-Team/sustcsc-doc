@@ -272,7 +272,7 @@ Average 'Timing for main': 97.23 seconds
 ```shell
 chmod +x wrf_verify.sh #这个命令只需执行一次
 
-./wrf_verify.sh wrfout_d01_2019-11-26_18\:10\:00.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
+./wrf_verify.sh wrfout.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
 ```
 
 运行成功后我们可以在终端看到以下信息：
@@ -327,6 +327,15 @@ tar -xvf conus2.5km.tar.gz && cd conus2.5km
 
 ```shell
 cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
+```
+
+对于正确性检验，你需要先从测试集群上拉取用于验证的参考结果，然后再进行结果比较：
+
+```shell
+scp -P 18188 你的账号@172.18.6.40:/work/share/software/wrf/wrfout_conus2.5.ref .
+
+chmod +x wrf_verify.sh #这个命令只需执行一次
+./wrf_verify.sh wrfout_conus2.5.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
 ```
 
 最后在模拟结果正确的情况下，通过对 rsl.out.0000 输出文件中每个时间步的 WRF 计算时间求平均值来测量结果。注意文件读取/写入期间的时间不包括在平均值中。然后提交以下几个文件作为结果：
