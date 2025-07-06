@@ -329,7 +329,7 @@ tar -xvf conus2.5km.tar.gz && cd conus2.5km
 cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 ```
 
-对于正确性检验，你需要先从测试集群上拉取用于验证的参考结果，然后再进行结果比较：
+对于正确性检验，你需要先从测试集群（使用Slurm作业系统的集群，非启明集群！）上拉取用于验证的参考结果，然后再进行结果比较：
 
 ```shell
 scp -P 18188 你的账号@172.18.6.40:/work/share/software/wrf/wrfout_conus2.5.ref .
