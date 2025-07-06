@@ -1,5 +1,6 @@
 ---
 title: CloverLeaf 编译优化挑战
+outline: 'deep'
 ---
 
 <script setup lang="ts">
@@ -574,7 +575,7 @@ Terminated with exit code 137
 
 所有提交都需要遵循以下格式。
 
-- **`CloverLeaf-2D/`** 以及各个编译器的运行脚本 **`job_<compiler>.slurm`**  
+- **`CloverLeaf_SCC/`** 以及各个编译器的运行脚本 **`job.<compiler>.slurm`**  
   完整源代码以及作业脚本，供组委会运行验证；附加说明请写在根目录 **README**。 
 
 - **`CloverLeaf_SCC/results/<compiler>/case<1-2>/*`** （赛中可不包含）  
@@ -1063,8 +1064,8 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 \ 参考时间 | GNU | Intel | AOCC |
 |:----------------:|:---:|:-----:|:----:|
-| case 1 | 372.87113213539124 s | 375.285696983337 s | -- |
-| case 2 | 5.7374670505523682 s | 5.81983780860901 s | -- |
+| case 1 | -- | 375.285696983337 s | -- |
+| case 2 | -- | 5.81983780860901 s | -- |
 
 ## 附录二：安装 AOCC 编译器
 
@@ -1364,6 +1365,31 @@ fi
 
 ```bash
 sbatch job.gnu.slurm
+```
+
+## 附录四：提交评测前检查
+
+请确保你的仓库结构如下或者至少包含如下结构：
+
+```
+CloverLeaf_SCC/
+├── cases
+│   ├── case1
+│   │   ├── clover.in
+│   │   └── clover.out
+│   └── case2
+│       ├── clover.in
+│       └── clover.out
+├── gnu
+│   ├── job.gnu.slurm
+│   └── clover_leaf （注意：此处应为 GNU 编译器生成的可执行文件）
+├── intel
+│   ├── job.intel.slurm
+│   └── clover_leaf （注意：此处应为 Intel 编译器生成的可执行文件）
+├── aocc （可选）
+│   ├── job.aocc.slurm
+│   └── clover_leaf （注意：此处应为 AOCC 编译器生成的可执行文件）
+└── README.md （仓库结构清楚的情况下，在赛中评测可不包含）
 ```
 
 ---
