@@ -1209,7 +1209,162 @@ Wall clock per case:
 
 ### 使用 GNU 编译器
 
-施工中...
+这里给出一种自己编译安装的通用做法，既不会用到系统自带 GCC 8.5，也能确保 OpenMPI 5.0.8 完全用 GCC 15.1 编译。
+
+1. 编译并安装 GCC 15.1
+```bash
+wget https://ftp.gnu.org/gnu/gcc/gcc-15.1.0/gcc-15.1.0.tar.xz
+tar -xf gcc-15.1.0.tar.xz
+mkdir gcc-15.1.0/build && cd gcc-15.1.0/build
+
+../configure --prefix=<你想安装到的位置>/gcc/15.1 \
+             --enable-languages=c,c++,fortran \
+             --disable-multilib
+
+make -j$(nproc)
+make install
+```
+2. 激活 GCC 15.1
+```bash
+export PATH=<你安装到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+```
+> [!IMPORTANT]
+> 每次使用 GCC 15.1 前，都需要运行上述两条命令来激活它。
+
+3. 用 GCC 15.1 编译 OpenMPI 5.0.8
+```bash
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
+tar -xzf openmpi-5.0.8.tar.gz
+mkdir openmpi-5.0.8/build && cd openmpi-5.0.8/build
+
+../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 \
+             CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
+             CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
+             FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
+
+make -j$(nproc)
+make install
+```
+4. 激活 OpenMPI 5.0.8
+```bash
+export PATH=<你安装到的位置>/openmpi/5.0.8-gcc15/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/openmpi/5.0.8-gcc15/lib:$LD_LIBRARY_PATH
+```
+> [!IMPORTANT]
+> 每次使用 OpenMPI 5.0.8 前，都需要运行上述两条命令来激活它。
+5. 验证
+```bash
+mpicc --version   # 应显示 "gcc version 15.1.0 ..."
+mpirun --version  # 应显示 "Open MPI 5.0.8"
+```
+
+接着进入 `CloverLeaf_SCC/` 并编译：
+
+```bash
+make COMPILER=GNU
+```
+
+新建任务脚本 `job.gnu.slurm`，内容如下：
+
+::: details job.gnu.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=NONE
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+export PATH=<你安装GCC到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装GCC到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+export PATH=<你安装OpenMPI的位置>/openmpi/5.0.8-gcc15/bin:$PATH
+export LD_LIBRARY_PATH=<你安装OpenMPI的位置>/openmpi/5.0.8-gcc15/lib:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=pmix -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+然后提交任务：
+
+```bash
+sbatch job.gnu.slurm
+```
 
 ---
 
