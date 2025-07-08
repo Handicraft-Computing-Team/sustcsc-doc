@@ -380,6 +380,7 @@ g++ -O3 gen.cpp -o gen
 ```
 参考代码位于`/work/share/simulate/code-20250626`目录下。
 评测代码位于`/work/share/simulate/eval-20250708`目录下（与赛间评测的代码相同，但测试成绩不作为最终评测成绩）。
+赛间评测提交开放时间请将`simulate.cpp`放置在`/work/share/sustcsc-submit/sustcsc_队伍编号/quantum`目录下，评测程序会执行评测并将反馈日志和得分文件放置在同目录下`eval.log`和`score.txt`两个文件中。请不要尝试以任何方式攻击评测程序和集群。
 
 ## 样例输入
 
