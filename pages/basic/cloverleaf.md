@@ -523,7 +523,7 @@ Terminated with exit code 137
 
 ### 竞赛目标
 
-本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了两个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 LLVM/AOCC 为附加 bonus。
+本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了两个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 AOCC、HPC-X 等其他编译器为附加 bonus。
 
 参赛队伍需要在 2 台计算节点上完成制定算力的评测，用于计分的指标是问题求解时间，即程序输出的 `clover.out` 最后 1 个 Wall clock.
 
@@ -1062,10 +1062,10 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 基准时间可能会更新。
 :::
 
-| 算例 \ 参考时间 | GNU | Intel | AOCC |
-|:----------------:|:---:|:-----:|:----:|
-| case 1 | 1035.6940088272095 s | 375.285696983337 s | 1111.994187116623 s |
-| case 2 | 17.665055990219116 s | 5.81983780860901 s | 30.25862097740173 s |
+| 算例 \ 参考时间 | GNU | Intel | AOCC | HPC-X |
+|:----------------:|:---:|:-----:|:----:|:-----:|
+| case 1 | 1035.6940088272095 s | 375.285696983337 s | 1111.994187116623 s | -- |
+| case 2 | 17.665055990219116 s | 5.81983780860901 s | 30.25862097740173 s | -- |
 
 ::: warning
 没错，你发现了系统自带（Intel）的比手动安装（GNU、AOCC）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
@@ -1512,6 +1512,48 @@ CloverLeaf_SCC/
     ├── <job_id>.err （可选，用于佐证成功运行）
     └── <job_id>.out （注意：此处应为 AOCC 版本最好的结果）
 ```
+
+## 附录五：安装并使用 HPC-X
+
+NVIDIA® HPC-X® 是一套功能全面的软件包，内含消息传递接口（MPI）、对称层次化共享内存（SHMEM）与分区全局地址空间（PGAS）通信库，以及多种加速组件。借助这一经过充分测试与打包的工具套件，MPI 与 SHMEM/PGAS 程序能够实现高性能、良好扩展性和高效率，并确保通信库在 NVIDIA Quantum InfiniBand 网络方案上得到充分优化。本次比赛中，HPC-X 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入 [HPC-X 官网](https://developer.nvidia.com/networking/hpc-x)，划到最底部，按照下图所示进行选择并下载：
+![](/images/hpcx.png)
+
+解压下载的压缩包，并进入解压后的目录。
+
+```bash
+tar -xvf hpcx-v2.21.3-gcc-doca_ofed-redhat8-cuda12-x86_64.tbz
+cd hpcx-v2.21.3-gcc-doca_ofed-redhat8-cuda12-x86_64
+export HPCX_HOME=$(pwd)
+```
+
+但是我们不必安装了，因为 HPC-X 已经编译好了。
+
+先加载之前安装好的 GCC 15.1：
+
+```bash
+export PATH=<你安装到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+```
+
+加载环境：
+
+```bash
+source $HPCX_HOME/hpcx-init.sh
+hpcx_load 
+env | grep HPCX # 确认环境变量已加载
+```
+
+进入 `CloverLeaf_SCC/` 目录，使用 HPC-X 编译 CloverLeaf：
+
+```bash
+make clean
+make COMPILER=GNU MPI_COMPILER=mpifort C_MPI_COMPILER=mpicc
+# 为什么这里是 GNU 呢？因为 HPC-X 原生支持 GNU 编译器！然而，在本次比赛中，我们还是把它单拎出来了。
+```
+
+以相似的手段创建作业脚本 `job.hpcx.slurm`，这里不赘述了。
 
 ---
 
