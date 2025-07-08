@@ -1064,10 +1064,30 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 \ 参考时间 | GNU | Intel | AOCC |
 |:----------------:|:---:|:-----:|:----:|
-| case 1 | 1035.6940088272095 s | 375.285696983337 s | -- |
-| case 2 | 17.665055990219116 s | 5.81983780860901 s | -- |
+| case 1 | 1035.6940088272095 s | 375.285696983337 s | 1111.994187116623 s |
+| case 2 | 17.665055990219116 s | 5.81983780860901 s | 30.25862097740173 s |
 
-## 附录二：安装 AOCC 编译器
+::: warning
+没错，你发现了系统自带（Intel）的比手动安装（GNU、AOCC）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
+
+那么怎么让自编译版也跟系统包一样快呢？最简单的当然是修改编译选项啦。Open MPI 本身就是代码在跑 MPI 调用时的内核，它内部怎样被编译、和硬件/调度器怎样对接，会直接决定通信延迟、带宽、进程启动时间以及锁粒度等细节；这些都会体现在最终应用的运行效率上。
+
+比如在 `./configure` 之前，加上一些编译选项：
+```bash
+export CC="gcc -O3 -march=native -flto"
+export CXX="g++ -O3 -march=native -flto"
+export FC="gfortran -O3 -march=native -flto"
+```
+然后再执行 `./configure --with-slurm --prefix=<安装目录>`。
+
+当然，这里还有很多的优化可以做（比如 `--with-verbs --with-ucx --with-ofi --with-cuda`），欢迎查看相关发行版的文档（或者询问 ChatGPT）并加以尝试。
+:::
+
+## 附录二：安装并使用 AOCC 编译器
+
+::: warning 警告
+AOCC 的安装需要基于 GCC 12 或更高版本的编译器。请先按照附录三“使用 GNU 编译器”安装 GCC 15.1。
+:::
 
 AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，由于集群全部为 Intel 节点而不是 AMD，AOCC 编译器的表现可能不如预期，所以作为 bonus，可选做，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
 
@@ -1092,13 +1112,15 @@ cd openmpi-5.0.8
 ```
 6. 启用 AOCC 编译器。
 ```bash
-./configure CC=clang CXX=clang++ FC=flang \
-            --with-wrapper-cc=clang \
-            --with-wrapper-cxx=clang++ \
-            --with-wrapper-fc=flang \
-            --prefix=<你想安装到的目录>/openmpi-aocc
-make -j && make install
-export PATH=<你想安装到的目录>/openmpi-aocc/bin:$PATH
+export GCC15=<安装GCC>=12的位置>/gcc/15.1
+export CC="clang --gcc-toolchain=$GCC15"
+export CXX="clang++ --gcc-toolchain=$GCC15"
+export FC="flang --gcc-toolchain=$GCC15"
+export LD_LIBRARY_PATH=$GCC15/lib64:$LD_LIBRARY_PATH
+./configure --with-slurm --prefix=<你想安装到的目录>/openmpi-aocc
+make -j$(nproc) && make install
+export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
 which mpicc
 ```
 
@@ -1107,6 +1129,107 @@ which mpicc
 export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
 export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
 ```
+
+进入 `CloverLeaf_SCC/` 目录，使用 AOCC 编译器编译 CloverLeaf：
+
+```bash
+make COMPILER=AOCC
+```
+
+然后提交任务：
+
+::: details job.aocc.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+
+# 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+source <你安装AOCC的位置>/setenv_AOCC.sh
+export PATH=<你安装OpenMPI的位置>/openmpi-aocc/bin:$PATH
+export LD_LIBRARY_PATH=<你安装OpenMPI的位置>/openmpi-aocc/lib:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=pmix -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
 
 ## 附录三：保姆级教程
 
