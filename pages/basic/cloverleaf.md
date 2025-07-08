@@ -1371,27 +1371,19 @@ sbatch job.gnu.slurm
 
 ## 附录四：提交评测前检查
 
-请确保你的仓库结构如下或者至少包含如下结构：
+对于赛中评测，请确保你的仓库结构如下或者至少包含如下结构：
 
 ```
 CloverLeaf_SCC/
-├── cases
-│   ├── case1
-│   │   ├── clover.in
-│   │   └── clover.out
-│   └── case2
-│       ├── clover.in
-│       └── clover.out
 ├── gnu
 │   ├── job.gnu.slurm
-│   └── clover_leaf （注意：此处应为 GNU 编译器生成的可执行文件）
+│   └── <job_id>.out （注意：此处应为 GNU 版本最好的结果）
 ├── intel
 │   ├── job.intel.slurm
-│   └── clover_leaf （注意：此处应为 Intel 编译器生成的可执行文件）
-├── aocc （可选）
-│   ├── job.aocc.slurm
-│   └── clover_leaf （注意：此处应为 AOCC 编译器生成的可执行文件）
-└── README.md （仓库结构清楚的情况下，在赛中评测可不包含）
+│   └── <job_id>.out （注意：此处应为 Intel 版本最好的结果）
+└── aocc （可选）
+    ├── job.aocc.slurm
+    └── <job_id>.out （注意：此处应为 AOCC 版本最好的结果）
 ```
 
 ---
