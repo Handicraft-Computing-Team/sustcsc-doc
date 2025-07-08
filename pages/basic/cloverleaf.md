@@ -1,6 +1,6 @@
 ---
 title: CloverLeaf 编译优化挑战
-outline: 'deep'
+outline: ['2', '3']
 ---
 
 <script setup lang="ts">
@@ -1052,7 +1052,7 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 ### 从源码安装 OpenMPI 时，`./configure` 报错 `working directory cannot be determined`
 
-目前尚不清楚原因。可以手动将所有 `configure` 脚本中的 `working directory` 相关行注释掉。一个可以成功 `./configure` 的版本发布在这个路径下 `/work/share/software/openmpi-5.0.8.tar.bz2`，可以使用 `cp` 指令进行复制，并使用指令 `tar -xvjf openmpi-5.0.8.tar.bz2` 进行解压。同时，敬请耐心等候组委会修复。
+该故障源于集群文件系统问题，目前已修复。未修复时，可以手动将所有 `configure` 脚本中的 `working directory` 相关行注释掉。一个可以成功 `./configure` 的版本发布在这个路径下 `/work/share/software/openmpi-5.0.8.tar.bz2`，可以使用 `cp` 指令进行复制，并使用指令 `tar -xvjf openmpi-5.0.8.tar.bz2` 进行解压。
 
 ## 附录一：基准时间参考
 
@@ -1064,8 +1064,8 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 \ 参考时间 | GNU | Intel | AOCC |
 |:----------------:|:---:|:-----:|:----:|
-| case 1 | -- | 375.285696983337 s | -- |
-| case 2 | -- | 5.81983780860901 s | -- |
+| case 1 | 1035.6940088272095 s | 375.285696983337 s | -- |
+| case 2 | 17.665055990219116 s | 5.81983780860901 s | -- |
 
 ## 附录二：安装 AOCC 编译器
 
@@ -1241,7 +1241,7 @@ wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
 tar -xzf openmpi-5.0.8.tar.gz
 mkdir openmpi-5.0.8/build && cd openmpi-5.0.8/build
 
-../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 \
+../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 --with-slurm \
              CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
              CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
              FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
@@ -1281,7 +1281,8 @@ make COMPILER=GNU
 #SBATCH --ntasks=48            # 可以更改
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
-#SBATCH --export=NONE
+
+# 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
 
 # 注意：比赛环境为 2 节点，每节点 48 核
 # 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
@@ -1377,12 +1378,15 @@ sbatch job.gnu.slurm
 CloverLeaf_SCC/
 ├── gnu
 │   ├── job.gnu.slurm
+│   ├── <job_id>.err （可选，用于佐证成功运行）
 │   └── <job_id>.out （注意：此处应为 GNU 版本最好的结果）
 ├── intel
 │   ├── job.intel.slurm
+│   ├── <job_id>.err （可选，用于佐证成功运行）
 │   └── <job_id>.out （注意：此处应为 Intel 版本最好的结果）
 └── aocc （可选）
     ├── job.aocc.slurm
+    ├── <job_id>.err （可选，用于佐证成功运行）
     └── <job_id>.out （注意：此处应为 AOCC 版本最好的结果）
 ```
 
