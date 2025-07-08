@@ -378,7 +378,8 @@ g++ -O3 gen.cpp -o gen
 ```bash
 ./simulate input.bin
 ```
-参考代码放在位于`/work/share/simulate/code-20250626`目录下。
+参考代码位于`/work/share/simulate/code-20250626`目录下。
+评测代码位于`/work/share/simulate/eval-20250708`目录下（与赛间评测的代码相同，但测试成绩不作为最终评测成绩）。
 
 ## 样例输入
 
