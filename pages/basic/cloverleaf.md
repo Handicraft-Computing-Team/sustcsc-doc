@@ -1218,6 +1218,8 @@ wget https://ftp.gnu.org/gnu/gcc/gcc-15.1.0/gcc-15.1.0.tar.xz
 tar -xf gcc-15.1.0.tar.xz
 mkdir gcc-15.1.0/build && cd gcc-15.1.0/build
 
+../contrib/download_prerequisites
+
 ../configure --prefix=<你想安装到的位置>/gcc/15.1 \
              --enable-languages=c,c++,fortran \
              --disable-multilib
