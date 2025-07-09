@@ -564,7 +564,7 @@ Terminated with exit code 137
 - **可复现性**  
   - 无法复现 → 0 分  
   - 可复现提交测试结果 → 1–3 分  
-  - 步骤清晰、依赖说明完整，可在多平台（x86、Arm）运行 → 2–3 分  
+  - 步骤清晰、依赖说明完整 → 2–3 分  
 - **表达质量**  
   - 文字混乱/抄袭 → 0 分  
   - 语言通顺、论述清晰 → 1–2 分  
@@ -1061,13 +1061,13 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 基准时间可能会更新。
 :::
 
-| 算例 \ 参考时间 | GNU | Intel | AOCC | HPC-X |
-|:----------------:|:---:|:-----:|:----:|:-----:|
-| case 1 | 1035.6940 s | 375.2857 s | 1111.9942 s | -- |
-| case 2 | 17.6651 s | 5.8198 s | 30.2586 s | -- |
+| 算例 \ 参考时间 | GNU | Intel | AOCC | HPC-X | MVAPICH |
+|:----------------:|:---:|:-----:|:----:|:-----:|:-------:|
+| case 1 | 1035.6940 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s |
+| case 2 | 17.6651 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s |
 
 ::: warning
-没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
+没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC 等）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
 
 那么怎么让自编译版也跟系统包一样快呢？最简单的当然是修改编译选项啦。Open MPI 本身就是代码在跑 MPI 调用时的内核，它内部怎样被编译、和硬件/调度器怎样对接，会直接决定通信延迟、带宽、进程启动时间以及锁粒度等细节；这些都会体现在最终应用的运行效率上。
 
@@ -1553,6 +1553,174 @@ make COMPILER=GNU MPI_COMPILER=mpifort C_MPI_COMPILER=mpicc
 ```
 
 以相似的手段创建作业脚本 `job.hpcx.slurm`，这里不赘述了。
+
+
+## 附录六：安装并使用 MVAPICH
+
+MVAPICH 是一个高性能的 MPI 实现，专为 InfiniBand、Omni-Path 和以太网等高速网络设计。它在 HPC 社区中广泛使用，并提供了对多种网络接口的支持，由俄亥俄州立大学开发。本次比赛中，MVAPICH 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入[官网](https://mvapich.cse.ohio-state.edu/downloads/)，按照下图进行选择，下载最新版本的 MVAPICH。
+![](/images/mvapich.png)
+
+下载完成后使用命令：
+
+```bash
+rpm2cpio mvapich-plus-4.1rc-nogpu.rhel8.ofed24.10.ucx.gcc13.2.0.slurm-4.1rc-1.el8.x86_64.rpm | cpio -id
+```
+
+这时候发现多出来一个 `opt` 目录，里面包含了 MVAPICH 的所有文件。所以可以这样加载环境：
+
+```bash
+export MVAPICH_HOME=$(pwd)/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+export PATH=$MVAPICH_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$MVAPICH_HOME/lib:$LD_LIBRARY_PATH
+```
+
+此时，`which mpicc` 应该显示 `xxx/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0/bin/mpicc`。
+
+`mpicc` 本身只是一个 MPI 编译器包装器，它最终会去调用某个真正的 C 编译器（缺省写成 `gcc`），再把 MPI 头文件和库的搜索路径附带进去。所以，你还需要按照附录三的方式加载 GCC 15.1。
+
+这时候，执行 `mpirun --version` 发现 `command not found`，这是因为我们下载的 MVAPICH SLURM 版在构建时 只保留了 PMI-2/PMIx 启动机制，把自带的进程管理器（mpirun_rsh/hydra）全部关闭。因此包里只有编译器包装器 mpicc 和 mpifort，而 没有 mpirun/mpiexec 可执行文件，这完全正常。我们只需要用 `srun` 而不是 `mpirun` 来启动 MPI 程序。比如：
+
+```bash
+srun --mpi=pmi2 -n "$NP" ./clover_leaf
+```
+
+接下来，用 `make COMPILER=GNU` 编译 CloverLeaf，然后撰写作业脚本提交任务即可。
+
+在 `make` 的时候有可能遇到报错：
+
+```bash
+Warning: Nonexistent include directory '/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0/include'
+```
+
+这是因为我们是从 rpm 包安装的，它会默认我们有 root 权限。一个简单的解决方法就是修改 Makefile。先对 Makefile 进行备份，然后在
+
+```bash
+FLAGS=$(FLAGS_$(COMPILER)) $(OMP) $(I3E) $(OPTIONS)
+CFLAGS=$(CFLAGS_$(COMPILER)) $(OMP) $(I3E) $(C_OPTIONS) -c
+MPI_COMPILER=mpif90
+C_MPI_COMPILER=mpicc
+```
+
+后面加上：
+
+```bash
+MPI_HOME ?= <安装位置>/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+FLAGS+= -L$(MPI_HOME)/lib
+CFLAGS+= -L$(MPI_HOME)/lib
+FLAGS  += -I$(MPI_HOME)/include
+CFLAGS += -I$(MPI_HOME)/include
+```
+
+这样虽然会报 Warning，但不会影响编译。
+
+编译完成之后，由于计算节点上没有安装 libpciaccess 和 slurm-libpmi，所以一个非常粗暴的做法就是：
+
+```bash
+cp /usr/lib64/libpciaccess.so.0 <CloverLeaf所在位置>
+cp /usr/lib64/libpmi.so.0 <CloverLeaf所在位置>
+```
+
+然后作业脚本里面加上
+
+```bash
+export LD_LIBRARY_PATH=<CloverLeaf所在位置>:$LD_LIBRARY_PATH
+```
+
+示例作业脚本如下（记得改路径）：
+
+::: details job.mvapich.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=ALL
+
+lscpu
+
+source ~/.bashrc
+export PATH=/work/ccse-xiaoyc/xqw/baomu/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/xqw/baomu/gcc/15.1/lib64:$LD_LIBRARY_PATH
+export MVAPICH_HOME=/work/ccse-xiaoyc/xqw/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+export PATH=$MVAPICH_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$MVAPICH_HOME/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/xqw/baomu/CloverLeaf_SCC:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  srun --mpi=pmi2 -n "$NP" ./clover_leaf
+  # mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
 
 ---
 
