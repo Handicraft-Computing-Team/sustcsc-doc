@@ -2138,12 +2138,40 @@ advisor --report=roofline --project-dir=./adv_proj
 
 ![](/images/roofline.png)
 
-我们针对 CloverLeaf 使用 3840x2840 的网格和 24 条线程进行了采样。图中所有热点循环的算术强度都集中在 0.07 到 0.18 FLOP/Byte 之间，也就是说每加载一条 64 字节的缓存行，只做几次浮点运算就得继续访存。这类密度远低于 Skylake-SP 拐点所需的三四 FLOP/Byte，因此它们天然是内存型代码。从纵坐标来看，最热的几个循环只能跑到 10 到 20 GFLOP/s，而同一节点的双精度向量 FMA 峰值接近 2000 GFLOP/s，显然计算单元几乎是空闲的。
+我们针对 CloverLeaf 使用 3840x3840 的网格和 24 条线程进行了采样。图中所有热点循环的算术强度都集中在 0.07 到 0.18 FLOP/Byte 之间，也就是说每加载一条 64 字节的缓存行，只做几次浮点运算就得继续访存。这类密度远低于 Skylake-SP 拐点所需的三四 FLOP/Byte，因此它们天然是内存型代码。从纵坐标来看，最热的几个循环只能跑到 10 到 20 GFLOP/s，而同一节点的双精度向量 FMA 峰值接近 2000 GFLOP/s，显然计算单元几乎是空闲的。
 
 更值得注意的是，这些点并没有贴在 DRAM 带宽屋顶上，而是在其下方约一半的位置。也就是说，带宽并非被硬件极限卡死，而是访问模式、NUMA 亲和或不规则 stride 让有效带宽损失了一半。这也能解释为什么即使我尝试手工写 AVX 指令，运行时间几乎没变，因为瓶颈根本不在算术吞吐。如果把内核迁移到有 HBM 或 GPU 的更高带宽平台，往往能一次性把性能提升一个量级。后续优化应聚焦于访存模式、NUMA 亲和和数据布局，而非堆砌指令级并行。
 
 ::: warning 也许？
 如果你能在报告中展示不同情况下的 Roofline 分析结果，那就更好了！
+:::
+
+这其实能部分解释为什么 MVAPICH 比 GNU+OpenMPI 快很多。先回到 Roofline 那张图，那张图说的是节点内部的算术和访存关系，算术单元空闲而内存带宽成为第一瓶颈。也就是说，只要数据已经在本地内存里，换成更强的矢量指令或者更快的 CPU 并不会把时间缩短很多。
+
+MPI 库的差别属于另一条链路：节点间通信。CloverLeaf 每一次 X-或 Y-sweep 都要做 halo 交换：把边界两列（或两行）的密度、能量、质量通量发给相邻进程。网格越大、进程越多，通信-计算重叠做得好不好就越重要。这里就轮到 MPI 实现出场了。MVAPICH 针对 IB/RDMA 做了零拷贝 pipeline、长消息 rendezvous、短消息 eager RDMA，再加上后台异步进展线程，能够实打实把带宽做满、把延迟压低；OpenMPI 如果用默认 UCX 或 ob1‐openib 路径，长消息通常走 copy-in/copy-out rendezvous，短消息走 eager 拷贝，再加上没有启用异步进展，很容易在 MPI_Waitall 上把核心挂住。整套应用运行时间可以写成两块相加：
+
+```
+T_total = T_compute_on_node  +  T_wait_for_halo
+```
+
+Roofline 帮助我们看清 T_compute_on_node；而 MVAPICH 快一倍说明 T_wait_for_halo 在 OpenMPI 版本里成了主导，而 MVAPICH 把这部分压得更低，所以整体速度翻番。
+
+::: warning 也许？
+运用附录十一中给出的 MPI 性能分析，看看时间线里 MPI_Waitall 的占比，GNU+OpenMPI 版本是比 MVAPICH 更高还是更低？这与理论一致吗？
+:::
+
+::: warning 也许？
+给 OpenMPI 明确指定 UCX/`ob1 + openib` 的参数并开启异步进展：
+
+```bash
+--mca pml ucx \
+--mca btl_openib_allow_ib 1 \
+--mca btl_openib_want_fork_support 0 \
+--mca mpi_leave_pinned 1 \
+--mca opal_progress 1000
+```
+
+同样让 GCC 编译版本加上 `-march=skylake-avx512 -flto`，不要只用默认 `-O3`。这样会更快了吗？
 :::
 
 ## 附录十三：赛中评测细分
