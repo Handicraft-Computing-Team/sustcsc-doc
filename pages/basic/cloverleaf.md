@@ -2026,6 +2026,16 @@ vtune --help collect       # 能列出全部 analysis types
 
 vtune -collect memory-access -result-dir vtune_${SLURM_JOB_ID} -- mpirun -n $SLURM_NTASKS ./clover_leaf
 # 这里 memory-access 是分析类型，其他类型可参考 `vtune --help collect` 的输出
+vtune -collect hotspots -result-dir vtune_${SLURM_JOB_ID} -- mpirun -n $SLURM_NTASKS ./clover_leaf
+# 也可以去收集热点信息
+```
+
+收集完后生成报告：
+
+```bash
+vtune -report summary -result-dir vtune_${SLURM_JOB_ID} > vtune_summary.txt
+vtune -report hotspots -result-dir vtune_${SLURM_JOB_ID} > vtune_hotspots.txt
+vtune -report memory-access -result-dir vtune_${SLURM_JOB_ID} > vtune_memory_access.txt
 ```
 
 ---
