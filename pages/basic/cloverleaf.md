@@ -2038,6 +2038,30 @@ vtune -report hotspots -result-dir vtune_${SLURM_JOB_ID} > vtune_hotspots.txt
 vtune -report memory-access -result-dir vtune_${SLURM_JOB_ID} > vtune_memory_access.txt
 ```
 
+## 附录十二：赛中评测细分
+
+```
+Team 1:
+  gnu: 9.9811 (1st), 10.0156 (2nd)
+  intel: 10.7531 (1st), 10.7298 (2nd)
+  total: 41.4796
+
+Team 10:
+  gnu: 10.005 (1st), 9.9938 (2nd)
+  intel: 9.9984 (1st), 10.1303 (2nd)
+  total: 40.127500000000005
+
+Team 13:
+  intel: 13.3421 (1st), 12.2373 (2nd)
+  aocc: 4.0123 (1st), 6.5633 (2nd)
+  total: 36.155
+
+Team 16:
+  intel: 10.0037 (1st), 10.1432 (2nd)
+  total: 20.146900000000002
+```
+
+
 ---
 
 <img src="/images/hikari.png" />
