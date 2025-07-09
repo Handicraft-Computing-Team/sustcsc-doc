@@ -2038,6 +2038,40 @@ vtune -report hotspots -result-dir vtune_${SLURM_JOB_ID} > vtune_hotspots.txt
 vtune -report memory-access -result-dir vtune_${SLURM_JOB_ID} > vtune_memory_access.txt
 ```
 
+### gprof
+
+如果你使用 GNU 编译器，可以使用 `gprof` 进行性能分析。
+
+首先，确保在编译时启用了 `-pg` 选项，可以在 `CFLAGS_GNU` 和 `FLAGS_GNU` 中添加 `-pg`，并暂时把优化等级调为 `-O2`。然后重新编译 CloverLeaf：
+
+```bash
+make COMPILER=GNU
+```
+
+编译完成后，修改 `job.gnu.slurm` 中的 `mpirun` 命令为：
+
+```bash
+# `GMON_OUT_PREFIX` 能让每个 rank 写成 gmon.<rank>.<pid>，避免互相覆盖。
+mpirun -n "$NP" env GMON_OUT_PREFIX="gmon.$SLURM_PROCID." ./clover_leaf
+# 把所有 gmon.* 累加进 gmon.sum
+gprof -s ./clover_leaf gmon.*             
+# 再生成汇总报告
+gprof ./clover_leaf gmon.sum > report_all.txt
+```
+
+如果想要可视化：
+
+```bash
+pip install gprof2dot graphviz
+gprof2dot -f gprof report_all.txt | dot -Tpng -o callgraph.png
+```
+
+![](/images/callgraph.png)
+
+![](/images/pie.png)
+
+再针对热点函数进行优化。
+
 ## 附录十二：赛中评测细分
 
 ```
