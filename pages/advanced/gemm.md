@@ -99,6 +99,12 @@ onMounted(() => {
 > **联系人**：赖海斌 12211612@mail.sustech.edu.cn  
 > **硬件平台**：NVIDIA V100 GPU (32GB显存) \* 1 + Xeon Platinum CPU
 
+## 赛题示例仓库。
+
+您可以使用自己的程序，也可以从示例仓库中修改！
+
+https://github.com/HaibinLai/SUSTech-HGEMM/tree/hgemm
+
 ## 〇、快速入门 C/CPP
 
 > By [赖海斌](https://space.bilibili.com/358070321) 12211612@mail.sustech.edu.cn 

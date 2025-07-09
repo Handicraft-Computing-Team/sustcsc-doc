@@ -204,6 +204,7 @@ tar -xvf conus12km.tar.gz && cd conus12km
 
 ```shell
 ln -s /your_path/WRFV4.4/main/wrf.exe ./wrf.exe
+ln -s /your_path/WRFV4.4/run/CAMtr_volume_mixing_ratio .
 ln -sf /your_path/WRFV4.4/run/CAMtr_volume_mixing_ratio.* .
 ln -sf /your_path/WRFV4.4/run/*_DATA .
 ln -sf /your_path/WRFV4.4/run/*TBL .
@@ -271,22 +272,50 @@ Average 'Timing for main': 97.23 seconds
 ```shell
 chmod +x wrf_verify.sh #这个命令只需执行一次
 
-./wrf_verify.sh rsl.out.0000
+./wrf_verify.sh wrfout.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
 ```
 
 运行成功后我们可以在终端看到以下信息：
 
 ```shell
-# 待完善
+Processing variable: qv (using QVAPOR)
+compiler comparison for qv
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176399998
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
+
+Processing variable: u (using U)
+compiler comparison for u
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176517598
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
+
+Processing variable: theta (using T)
+compiler comparison for theta
+Input, F-statistic: 0
+Input, df factor: 1
+Input, df error: 176399998
+p-value probability = 1.0 means 100% reject null hypothesis that means are same
+p-value probability = 0.999999998950383
+
+We are pretty darn confident that the vendor vs exemplar comparisons are OK
 ```
 
-则说明WRF模型的模拟结果正确，时间成绩有效。
+当三个物理量的误差分析都出现“We are pretty darn confident that the vendor vs exemplar comparisons are OK”，则说明WRF模型的模拟结果正确，时间成绩有效。
 
 ## 赛题任务要求
 
 ### a（20分）
 
-在正式比赛中我们使用conus 2.5 km数据集对 WRF进行基准测试，这里你需要先下载数据集：
+在正式比赛中我们使用conus 2.5 km数据集对 WRF进行基准测试，且只在4个CPU节点上运行（包括最终的时间结果仅考虑4个CPU节点上的运行结果）。这里你需要先下载数据集：
 
 ```shell
 wget https://tqi-public.s3.us-east-2.amazonaws.com/datasets/v2/conus2.5km.tar.gz
@@ -300,6 +329,15 @@ tar -xvf conus2.5km.tar.gz && cd conus2.5km
 cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 ```
 
+对于正确性检验，你需要先从测试集群（使用Slurm作业系统的集群，非启明集群！）上拉取用于验证的参考结果，然后再进行结果比较：
+
+```shell
+scp -P 18188 你的账号@172.18.6.40:/work/share/software/wrf/wrfout_conus2.5.ref .
+
+chmod +x wrf_verify.sh #这个命令只需执行一次
+./wrf_verify.sh wrfout_conus2.5.ref wrfout_d01_2019-11-26_18\:10\:00 # 预计用时7分钟
+```
+
 最后在模拟结果正确的情况下，通过对 rsl.out.0000 输出文件中每个时间步的 WRF 计算时间求平均值来测量结果。注意文件读取/写入期间的时间不包括在平均值中。然后提交以下几个文件作为结果：
 
 - namelist.input
@@ -307,7 +345,7 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### b（40分）
 
@@ -315,23 +353,50 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 
 ```shell
 &domains  
-  numtiles_x =  0  
-  numtiles_y =  0  
+  numtiles   = 1  
   nproc_x    = -1  
   nproc_y    = -1  
 /  
 ```
 
-- `numtiles_x` 和 `numtiles_y` 控制每个 MPI 进程中使用的 OpenMP 线程数量（以及它们的排列方向）。
+- `numtiles` 控制每个 MPI 进程中使用的 OpenMP 线程数量。
 
 - `nproc_x` 和 `nproc_y` 控制 MPI 排序（以及它们的排列方向）。
 
 对于 MPI 分解，水平分解的任一方向（x 或 y）上的格点数都不能小于 10。MPI 进程的总数等于 `nproc_x * nproc_y`。例如，要使用 96 个总进程，你可以选择 48 个 MPI 进程，每个 MPI 进程运行 2 个 OpenMP 线程。
 
 - 在 48 个 MPI 进程中，你可以在南北方向上进行 48 列分解、西东方向上进行 1 列分解（或 24×2、16x3、12×4、8x6、6×8、4x12、3x16、2×24、1×48 等组合）。
-- 对于 OpenMP 线程（由 `numtiles_x` 和 `numtiles_y` 控制），你同样可以选择线程的排列方式。例如，对于两个线程，你可以设置 `numtiles_x=1, numtiles_y=2`（或 2×1）。
+- 对于 OpenMP 线程（由 `numtiles` 控制），你可以选择每个MPI进程中的线程数。例如，对于每个MPI进程有两个线程，你可以设置 `numtiles=2`。
 
 仅就 MPI 与 OpenMP 选项的组合而言，就存在巨大的性能调优空间。因此，你可以尝试修改（也仅可修改）`namelist.input` 文件的 `&domains` 部分，测试不同的MPI与OpenMP组合，来获得更好的运行性能，最终使得WRF模型模拟时间减少。
+
+请注意，为了支持MPI+OpenMP混合运行方式，你需要对作业脚本进行相关修改，例如（以numtiles=2为例）：
+
+```shell
+#!/bin/bash
+#BSUB -q ssc-cpu
+#BSUB -n 96
+#BSUB -e %J.err
+#BSUB -o %J.out
+#BSUB -R "span[ptile=24]"
+
+hostfile=`echo $LSB_DJOB_HOSTFILE`
+NP=`cat $hostfile | wc -l`
+cd $LS_SUBCWD
+
+module load openmpi/4.1.1_gcc-8.5.0
+module load netcdf-c/4.7.1_gcc-8.5.0
+module load netcdf-fortran/4.4.5_gcc-8.5.0
+
+numtiles=2  # number of OpenMP threads per MPI task
+ppr=$(($NP/4/$numtiles))
+real_np=$(($NP/$numtiles))
+
+# OpenMP settings:
+export OMP_NUM_THREADS=$numtiles
+
+time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map-by ppr:$ppr:node:pe=$numtiles ./wrf.exe
+```
 
 最终的提交结果为我们能找到的最佳MPI与OpenMP组合的结果：
 
@@ -340,7 +405,7 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### c（40分）
 
@@ -355,12 +420,31 @@ cp namelist.input.conus2.5 /your_path/conus2.5km/namelist.input
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### Bonus（20分）
 
-我们可以尝试在单GPU上运行WRF程序，WRF GPU版本（AceCAST）可以访问：[https://acecast-docs.readthedocs.io/en/latest/index.html](https://acecast-docs.readthedocs.io/en/latest/index.html)
+由于AceCAST需要收费才能使用，WRFg也无下载链接，因此之前的WRF GPU挑战无法进行，这里我们设置新的Bonus任务：**即尝试在1小时之内完成对conus 2.5 km数据集6小时的模拟量（同样使用4个CPU节点，96核）**。
 
-对于算例可以参考：[https://acecast-docs.readthedocs.io/en/latest/Benchmarks.html#ncar-standard-benchmark-test-cases](https://acecast-docs.readthedocs.io/en/latest/Benchmarks.html#ncar-standard-benchmark-test-cases)
+我们会提供`namelist.input.bonus`，注意对于namelist.input里的参数，除了以下几个参数可以修改，其他参数严禁修改：
 
-如果参赛队伍能成功运行GPU版本的WRF程序并获得结果，便可获得额外的20分奖励。
+```shell
+&domains  
+  numtiles   = 1  
+  nproc_x    = -1  
+  nproc_y    = -1  
+/
+
+&namelist_quilt
+nio_tasks_per_group = 0,
+nio_groups = 1,
+ /
+```
+
+此外，在作业脚本里可以添加`time -p`至程序运行的命令处用于计时（计时结果会输出到日志里），如：
+
+```shell
+time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map-by ppr:$ppr:node:pe=$numtiles ./wrf.exe
+```
+
+如果参赛队伍能成功在1小时之内完整模拟并获得结果（同时最后通过正确性验证），便可获得额外的20分奖励。**请注意，Bonus的成绩不参与打榜环节，这里我们也不提供用于正确性验证的参考结果，我们会在比赛结束后统一验证，请将Bonus任务中涉及的所有优化的过程和结果在最终报告中写明**。

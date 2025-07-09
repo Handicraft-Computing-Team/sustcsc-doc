@@ -522,7 +522,7 @@ Terminated with exit code 137
 
 ### 竞赛目标
 
-本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了两个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 LLVM/AOCC 为附加 bonus。
+本次竞赛的目标是对 CloverLeaf 进行编译优化，提升其性能。我们将提供一个 CloverLeaf 的简化版本，包含了两个算例，每个算例都包含了不同的物理模型和参数设置。你需要在给定的时间内完成所有算例的编译优化，并提交你的代码和结果。选手需要使用 GNU 以及 Intel 编译器进行编译优化，而 AOCC、HPC-X 等其他编译器为附加 bonus。
 
 参赛队伍需要在 2 台计算节点上完成制定算力的评测，用于计分的指标是问题求解时间，即程序输出的 `clover.out` 最后 1 个 Wall clock.
 
@@ -540,14 +540,13 @@ Terminated with exit code 137
 
 #### 正确性验证
 - 组委会以参考 `clover.out` 为基准验证：计算过程中 **Volume** 与 **Mass** 保持不变，最终 **Kinetic Energy** 与参考值偏差 ≤ ±0.1 %。  
-  - 对 `case1`、`case2`、`case3`，若通过验证，`clover.out` 末尾将输出 **"This test is considered PASSED"**。  
 - 组委会阅读工程文档和代码，以确认优化未改变 **CloverLeaf** 的物理过程。  
 - 若仍无法确认代码正确性，组委会可要求进一步解释，并在不同处理器/参数下复测。**未通过正确性验证的算例，其性能得分计 0 分**。  
 
 #### 性能分数
-- 性能指标 **A<sub>CL</sub>**（单位：秒）取自 `clover.out` 最后一行 **"Wall clock"**。   
-- 设算例 *i* 的得分为 *M<sub>CL,i</sub>*，则 $M_{CL,i}=B\times\frac{A_{CL,i}}{A_{CL,\min}}$.
-- 性能总分为各编译器得到的性能分数之和，GNU 及 Intel 的 B 值为 10，而其他编译器（作为 bonus）的 B 值为 4.
+- 性能指标 $A_{CL,i}$（单位：秒）代表使用编译器 $CL$ 在算例 $i$ 上的耗时，取自 `clover.out` 最后一行 **"Wall clock"**。   
+- 设使用编译器 $CL$ 在算例 $i$ 的得分为 $M_{CL,i}$，则 $M_{CL,i}=B\times\frac{A_{CL,i}}{A^*_{CL,i}}$，其中 $A_{CL,i}$ 为参考耗时，$A^*_{CL,i}$ 为选手提交的耗时，$B$ 为编译器的性能系数。
+- 性能总分为各编译器各算例得到的性能分数之和，GNU 及 Intel 的 B 值为 10，而其他编译器（作为 bonus）的 B 值为 4.
 - 若 **违反规则、无法复现、篡改输出或恶意利用 Bug**，性能分数记 **0 分**。  
 
 #### 工程分数
@@ -564,7 +563,7 @@ Terminated with exit code 137
 - **可复现性**  
   - 无法复现 → 0 分  
   - 可复现提交测试结果 → 1–3 分  
-  - 步骤清晰、依赖说明完整，可在多平台（x86、Arm）运行 → 2–3 分  
+  - 步骤清晰、依赖说明完整 → 2–3 分  
 - **表达质量**  
   - 文字混乱/抄袭 → 0 分  
   - 语言通顺、论述清晰 → 1–2 分  
@@ -574,7 +573,7 @@ Terminated with exit code 137
 
 所有提交都需要遵循以下格式。
 
-- **`CloverLeaf-2D/`** 以及各个编译器的运行脚本 **`job_<compiler>.slurm`**  
+- **`CloverLeaf_SCC/`** 以及各个编译器的运行脚本 **`job.<compiler>.slurm`**  
   完整源代码以及作业脚本，供组委会运行验证；附加说明请写在根目录 **README**。 
 
 - **`CloverLeaf_SCC/results/<compiler>/case<1-2>/*`** （赛中可不包含）  
@@ -700,6 +699,7 @@ OpenMP 版本不匹配
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
 #SBATCH --export=NONE
+#SBATCH --exclusive
 
 # 注意：比赛环境为 2 节点，每节点 48 核
 # 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
@@ -1051,7 +1051,7 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 ### 从源码安装 OpenMPI 时，`./configure` 报错 `working directory cannot be determined`
 
-目前尚不清楚原因。可以手动将所有 `configure` 脚本中的 `working directory` 相关行注释掉。一个可以成功 `./configure` 的版本发布在这个路径下 `/work/share/software/openmpi-5.0.8.tar.bz2`，可以使用 `cp` 指令进行复制，并使用指令 `tar -xvjf openmpi-5.0.8.tar.bz2` 进行解压。同时，敬请耐心等候组委会修复。
+该故障源于集群文件系统问题，目前已修复。未修复时，可以手动将所有 `configure` 脚本中的 `working directory` 相关行注释掉。一个可以成功 `./configure` 的版本发布在这个路径下 `/work/share/software/openmpi-5.0.8.tar.bz2`，可以使用 `cp` 指令进行复制，并使用指令 `tar -xvjf openmpi-5.0.8.tar.bz2` 进行解压。
 
 ## 附录一：基准时间参考
 
@@ -1061,12 +1061,25 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 基准时间可能会更新。
 :::
 
-| 算例 \ 参考时间 | GNU | Intel | AOCC |
-|:----------------:|:---:|:-----:|:----:|
-| case 1 | 372.87113213539124 s | 375.285696983337 s | -- |
-| case 2 | 5.7374670505523682 s | 5.81983780860901 s | -- |
+基准时间：
 
-## 附录二：安装 AOCC 编译器
+| 算例 | GNU | Intel | AOCC | HPC-X\* | MVAPICH | MPICH | NVHPC |
+|:----------------:|:---:|:-----:|:----:|:-----:|:-------:|:-------:|:-----:|
+| 1 | 1033.1695 s | 519.8045 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
+| 2 | 17.6088 s | 8.0040 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
+
+::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
+:::
+
+::: warning
+没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC 等）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。如果可以，欢迎选择下载发行的二进制版本而不是从源码开始编译。
+:::
+
+## 附录二：安装并使用 AOCC 编译器
+
+::: warning 警告
+AOCC 的安装需要基于 GCC 12 或更高版本的编译器。请先按照附录三“使用 GNU 编译器”安装 GCC 15.1。
+:::
 
 AOCC 编译器是 AMD 官方的编译器，支持最新的 Zen5 架构。在本次比赛中，由于集群全部为 Intel 节点而不是 AMD，AOCC 编译器的表现可能不如预期，所以作为 bonus，可选做，其基准分数为 4 分（而不是 10 分）。如果你想使用 AOCC 编译器，可以按照以下步骤安装。
 
@@ -1091,13 +1104,15 @@ cd openmpi-5.0.8
 ```
 6. 启用 AOCC 编译器。
 ```bash
-./configure CC=clang CXX=clang++ FC=flang \
-            --with-wrapper-cc=clang \
-            --with-wrapper-cxx=clang++ \
-            --with-wrapper-fc=flang \
-            --prefix=<你想安装到的目录>/openmpi-aocc
-make -j && make install
-export PATH=<你想安装到的目录>/openmpi-aocc/bin:$PATH
+export GCC15=<安装GCC>=12的位置>/gcc/15.1
+export CC="clang --gcc-toolchain=$GCC15"
+export CXX="clang++ --gcc-toolchain=$GCC15"
+export FC="flang --gcc-toolchain=$GCC15"
+export LD_LIBRARY_PATH=$GCC15/lib64:$LD_LIBRARY_PATH
+./configure --with-slurm --prefix=<你想安装到的目录>/openmpi-aocc
+make -j$(nproc) && make install
+export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
 which mpicc
 ```
 
@@ -1106,6 +1121,108 @@ which mpicc
 export PATH=<你安装到的目录>/openmpi-aocc/bin:$PATH
 export LD_LIBRARY_PATH=<你安装到的目录>/openmpi-aocc/lib:$LD_LIBRARY_PATH
 ```
+
+进入 `CloverLeaf_SCC/` 目录，使用 AOCC 编译器编译 CloverLeaf：
+
+```bash
+make COMPILER=AOCC
+```
+
+然后提交任务：
+
+::: details job.aocc.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --exclusive
+
+# 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+source <你安装AOCC的位置>/setenv_AOCC.sh
+export PATH=<你安装OpenMPI的位置>/openmpi-aocc/bin:$PATH
+export LD_LIBRARY_PATH=<你安装OpenMPI的位置>/openmpi-aocc/lib:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=pmix -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
 
 ## 附录三：保姆级教程
 
@@ -1209,7 +1326,775 @@ Wall clock per case:
 
 ### 使用 GNU 编译器
 
-施工中...
+::: warning 重要更新
+安装 GCC 15.1 的时候需要带上一些优化选项，否则性能会差一些。
+:::
+
+::: danger 注意
+不一定非要从源码构建 GCC，也可以下载预编译的二进制包，实测会快一些。
+:::
+
+这里给出一种自己编译安装的通用做法，既不会用到系统自带 GCC 8.5，也能确保 OpenMPI 5.0.8 完全用 GCC 15.1 编译。
+
+1. 编译并安装 GCC 15.1
+```bash
+wget https://ftp.gnu.org/gnu/gcc/gcc-15.1.0/gcc-15.1.0.tar.xz
+tar -xf gcc-15.1.0.tar.xz
+mkdir gcc-15.1.0/build && cd gcc-15.1.0/build
+
+../contrib/download_prerequisites
+
+../configure \
+  --prefix=<你想安装到的位置>/gcc/15.1 \
+  --enable-bootstrap \
+  --enable-languages=c,c++,fortran,lto \
+  --disable-multilib \
+  --with-arch=native --with-tune=native \
+  --with-system-zlib \
+  --enable-shared --enable-threads=posix \
+  --enable-checking=release \
+  --enable-__cxa_atexit \
+  --disable-libunwind-exceptions \
+  --enable-gnu-unique-object \
+  --enable-linker-build-id \
+  --with-gcc-major-version-only \
+  --with-linker-hash-style=gnu \
+  --enable-plugin \
+  --enable-initfini-array \
+  --with-isl \
+  --disable-libmpx \
+  --enable-gnu-indirect-function \
+  --enable-cet \
+  --with-pkgversion="GCC 15.1 (SUSTCSC Customized)" \
+  --with-bugurl="mailto:12211634@mail.sustech.edu.cn" \
+  --build=x86_64-redhat-linux
+
+# 上面这些选项可以通过 gcc -v 来查看，主要是为了模仿发行版 configure 的设置以获得最佳性能
+
+make -j$(nproc)
+make install
+```
+2. 激活 GCC 15.1
+```bash
+export PATH=<你安装到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+```
+> [!IMPORTANT]
+> 每次使用 GCC 15.1 前，都需要运行上述两条命令来激活它。
+
+3. 用 GCC 15.1 编译 OpenMPI 5.0.8
+```bash
+wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
+tar -xzf openmpi-5.0.8.tar.gz
+mkdir openmpi-5.0.8/build && cd openmpi-5.0.8/build
+
+export CFLAGS="-O3 -march=native -fno-plt -pipe"
+export CXXFLAGS="$CFLAGS"
+export FCFLAGS="$CFLAGS"
+
+../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 \
+  --with-slurm \
+  --disable-debug \
+  --without-memory-manager \
+  --disable-dlopen \
+  --enable-mpi-fortran=all \
+  --enable-mpirun-prefix-by-default \
+  --with-wrapper-cflags="$CFLAGS" \
+  --with-wrapper-cxxflags="$CFLAGS" \
+  CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
+  CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
+  FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
+
+make -j$(nproc)
+make install
+```
+4. 激活 OpenMPI 5.0.8
+```bash
+export PATH=<你安装到的位置>/openmpi/5.0.8-gcc15/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/openmpi/5.0.8-gcc15/lib:$LD_LIBRARY_PATH
+```
+> [!IMPORTANT]
+> 每次使用 OpenMPI 5.0.8 前，都需要运行上述两条命令来激活它。
+5. 验证
+```bash
+mpicc --version   # 应显示 "gcc version 15.1.0 ..."
+mpirun --version  # 应显示 "Open MPI 5.0.8"
+```
+
+接着进入 `CloverLeaf_SCC/` 并编译：
+
+```bash
+make COMPILER=GNU
+```
+
+新建任务脚本 `job.gnu.slurm`，内容如下：
+
+::: details job.gnu.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --exclusive
+
+# 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+export PATH=<你安装GCC到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装GCC到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+export PATH=<你安装OpenMPI的位置>/openmpi/5.0.8-gcc15/bin:$PATH
+export LD_LIBRARY_PATH=<你安装OpenMPI的位置>/openmpi/5.0.8-gcc15/lib:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=pmix -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+然后提交任务：
+
+```bash
+sbatch job.gnu.slurm
+```
+
+## 附录四：提交评测前检查
+
+对于赛中评测，请确保你的仓库结构如下或者至少包含如下结构：
+
+```
+CloverLeaf_SCC/
+├── gnu
+│   ├── job.gnu.slurm
+│   ├── <job_id>.err （可选，用于佐证成功运行）
+│   └── <job_id>.out （注意：此处应为 GNU 版本最好的结果）
+├── intel
+│   ├── job.intel.slurm
+│   ├── <job_id>.err （可选，用于佐证成功运行）
+│   └── <job_id>.out （注意：此处应为 Intel 版本最好的结果）
+└── aocc （可选）
+    ├── job.aocc.slurm
+    ├── <job_id>.err （可选，用于佐证成功运行）
+    └── <job_id>.out （注意：此处应为 AOCC 版本最好的结果）
+```
+
+## 附录五：安装并使用 HPC-X
+
+NVIDIA® HPC-X® 是一套功能全面的软件包，内含消息传递接口（MPI）、对称层次化共享内存（SHMEM）与分区全局地址空间（PGAS）通信库，以及多种加速组件。借助这一经过充分测试与打包的工具套件，MPI 与 SHMEM/PGAS 程序能够实现高性能、良好扩展性和高效率，并确保通信库在 NVIDIA Quantum InfiniBand 网络方案上得到充分优化。本次比赛中，HPC-X 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入 [HPC-X 官网](https://developer.nvidia.com/networking/hpc-x)，划到最底部，按照下图所示进行选择并下载：
+![](/images/hpcx.png)
+
+解压下载的压缩包，并进入解压后的目录。
+
+```bash
+tar -xvf hpcx-v2.21.3-gcc-doca_ofed-redhat8-cuda12-x86_64.tbz
+cd hpcx-v2.21.3-gcc-doca_ofed-redhat8-cuda12-x86_64
+export HPCX_HOME=$(pwd)
+```
+
+但是我们不必安装了，因为 HPC-X 已经编译好了。
+
+先加载之前安装好的 GCC 15.1：
+
+```bash
+export PATH=<你安装到的位置>/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的位置>/gcc/15.1/lib64:$LD_LIBRARY_PATH
+```
+
+加载环境：
+
+```bash
+source $HPCX_HOME/hpcx-init.sh
+hpcx_load 
+env | grep HPCX # 确认环境变量已加载
+```
+
+进入 `CloverLeaf_SCC/` 目录，使用 HPC-X 编译 CloverLeaf：
+
+```bash
+make clean
+make COMPILER=GNU MPI_COMPILER=mpifort C_MPI_COMPILER=mpicc
+# 为什么这里是 GNU 呢？因为 HPC-X 原生支持 GNU 编译器！然而，在本次比赛中，我们还是把它单拎出来了。
+```
+
+以相似的手段创建作业脚本 `job.hpcx.slurm`，这里不赘述了。
+
+
+## 附录六：安装并使用 MVAPICH
+
+MVAPICH 是一个高性能的 MPI 实现，专为 InfiniBand、Omni-Path 和以太网等高速网络设计。它在 HPC 社区中广泛使用，并提供了对多种网络接口的支持，由俄亥俄州立大学开发。本次比赛中，MVAPICH 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入[官网](https://mvapich.cse.ohio-state.edu/downloads/)，按照下图进行选择，下载最新版本的 MVAPICH。
+![](/images/mvapich.png)
+
+下载完成后使用命令：
+
+```bash
+rpm2cpio mvapich-plus-4.1rc-nogpu.rhel8.ofed24.10.ucx.gcc13.2.0.slurm-4.1rc-1.el8.x86_64.rpm | cpio -id
+```
+
+这时候发现多出来一个 `opt` 目录，里面包含了 MVAPICH 的所有文件。所以可以这样加载环境：
+
+```bash
+export MVAPICH_HOME=$(pwd)/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+export PATH=$MVAPICH_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$MVAPICH_HOME/lib:$LD_LIBRARY_PATH
+```
+
+此时，`which mpicc` 应该显示 `xxx/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0/bin/mpicc`。
+
+`mpicc` 本身只是一个 MPI 编译器包装器，它最终会去调用某个真正的 C 编译器（缺省写成 `gcc`），再把 MPI 头文件和库的搜索路径附带进去。所以，你还需要按照附录三的方式加载 GCC 15.1。
+
+这时候，执行 `mpirun --version` 发现 `command not found`，这是因为我们下载的 MVAPICH SLURM 版在构建时 只保留了 PMI-2/PMIx 启动机制，把自带的进程管理器（mpirun_rsh/hydra）全部关闭。因此包里只有编译器包装器 mpicc 和 mpifort，而 没有 mpirun/mpiexec 可执行文件，这完全正常。我们只需要用 `srun` 而不是 `mpirun` 来启动 MPI 程序。比如：
+
+```bash
+srun --mpi=pmi2 -n "$NP" ./clover_leaf
+```
+
+接下来，用 `make COMPILER=GNU` 编译 CloverLeaf，然后撰写作业脚本提交任务即可。
+
+在 `make` 的时候有可能遇到报错：
+
+```bash
+Warning: Nonexistent include directory '/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0/include'
+```
+
+这是因为我们是从 rpm 包安装的，它会默认我们有 root 权限。一个简单的解决方法就是修改 Makefile。先对 Makefile 进行备份，然后在
+
+```bash
+FLAGS=$(FLAGS_$(COMPILER)) $(OMP) $(I3E) $(OPTIONS)
+CFLAGS=$(CFLAGS_$(COMPILER)) $(OMP) $(I3E) $(C_OPTIONS) -c
+MPI_COMPILER=mpif90
+C_MPI_COMPILER=mpicc
+```
+
+后面加上：
+
+```bash
+MPI_HOME ?= <安装位置>/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+FLAGS+= -L$(MPI_HOME)/lib
+CFLAGS+= -L$(MPI_HOME)/lib
+FLAGS  += -I$(MPI_HOME)/include
+CFLAGS += -I$(MPI_HOME)/include
+```
+
+这样虽然会报 Warning，但不会影响编译。
+
+编译完成之后，由于计算节点上没有安装 libpciaccess 和 slurm-libpmi，所以一个非常粗暴的做法就是：
+
+```bash
+cp /usr/lib64/libpciaccess.so.0 <CloverLeaf所在位置>
+cp /usr/lib64/libpmi.so.0 <CloverLeaf所在位置>
+```
+
+然后作业脚本里面加上
+
+```bash
+export LD_LIBRARY_PATH=<CloverLeaf所在位置>:$LD_LIBRARY_PATH
+```
+
+示例作业脚本如下（记得改路径）：
+
+::: details job.mvapich.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=ALL
+#SBATCH --exclusive
+
+lscpu
+
+source ~/.bashrc
+export PATH=/work/ccse-xiaoyc/xqw/baomu/gcc/15.1/bin:$PATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/xqw/baomu/gcc/15.1/lib64:$LD_LIBRARY_PATH
+export MVAPICH_HOME=/work/ccse-xiaoyc/xqw/opt/mvapich/plus/4.1rc/nogpu/ucx/slurm/gcc13.2.0
+export PATH=$MVAPICH_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$MVAPICH_HOME/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/xqw/baomu/CloverLeaf_SCC:$LD_LIBRARY_PATH
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  srun --mpi=pmi2 -n "$NP" ./clover_leaf
+  # mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+## 附录七：安装并使用 MPICH
+
+::: warning
+结果尚未验证，敬请期待。
+:::
+
+MPICH 是阿贡国家实验室 (Argonne National Laboratory) 发布的高性能、可广泛移植的 MPI-4.1 标准实现。此版本具备该标准所需的所有 MPI 4.1 功能和特性，但不支持用户定义的 I/O 数据表示，是很多研究 MPI 特性的基线。本次比赛中，MPICH 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入[官网](https://www.mpich.org/downloads/)，选择下载 mpich-4.3.1 (stable release)	。
+
+```bash
+wget https://www.mpich.org/static/downloads/4.3.1/mpich-4.3.1.tar.gz
+tar -xzf mpich-4.3.1.tar.gz
+cd mpich-4.3.1
+./configure --prefix=<你想安装到的目录>/mpich
+make -j$(nproc) && make install
+```
+
+配置环境变量：
+
+```bash
+export PATH=<你安装到的目录>/mpich/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的目录>/mpich/lib:$LD_LIBRARY_PATH
+export MANPATH=<你安装到的目录>/mpich/man:$MANPATH
+```
+
+进入 `CloverLeaf_SCC/` 目录，使用 MPICH 编译 CloverLeaf：
+
+```bash
+make COMPILER=GNU
+```
+
+作业脚本不赘述。
+
+## 附录八：安装并使用 NVIDIA HPC SDK
+
+NVIDIA HPC SDK C、C++ 和 Fortran 编译器支持使用标准 C++ 和 Fortran、OpenACC® 指令以及 CUDA® 对 HPC 建模和仿真应用程序进行 GPU 加速。GPU 加速数学库可最大程度提升常见 HPC 算法的性能，而优化的通信库则支持基于标准的多 GPU 和可扩展系统编程。性能分析和调试工具可简化 HPC 应用程序的移植和优化，而容器化工具则可轻松实现本地或云端部署。HPC SDK 支持 NVIDIA GPU 以及运行 Linux 的 Arm 或 x86-64 CPU，可提供构建 NVIDIA GPU 加速 HPC 应用程序所需的工具。本次比赛中这个赛题不会提供 GPU，但 NVIDIA HPC SDK 也可以在 没有 GPU 的机器上安装，只是 GPU 专属库（cuBLAS、cuFFT 等）和 Nsight Compute/Systems 无法运行。NVHPC 基准分数为 4 分（而不是 10 分）。
+
+下载并安装：
+
+```bash
+wget https://developer.download.nvidia.com/hpc-sdk/25.5/nvhpc_2025_255_Linux_x86_64_cuda_12.9.tar.gz
+tar xpzf nvhpc_2025_255_Linux_x86_64_cuda_12.9.tar.gz
+nvhpc_2025_255_Linux_x86_64_cuda_12.9/install # 注意要选 Network Install
+```
+
+安装完成后，命令行中会显示配置环境变量的方法，建议记下来。比如，如果你喜欢使用 `module load`，那么命令大概是：
+
+```bash
+module load <xxx>/modulefiles/nvhpc/25.5
+```
+
+编译 CloverLeaf：
+
+```bash
+make COMPILER=PGI
+```
+
+然而，PGI 被 NVIDIA 收购之后，nvfortran >= 24.x 把 PGI 时代的 -Mipa 家族全部合并进新 IP 优化管线，如果你收到了下面的警告：
+
+```bash
+nvfortran-Warning-The option -Mipa has been deprecated and is ignored
+```
+
+你可以把 `-Mipa=fast` 改为 `-O3`。
+
+示例作业脚本如下（记得改路径）：
+
+::: details job.nvhpc.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=ALL
+#SBATCH --exclusive
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+module purge
+export NVHPC_ROOT=/work/ccse-xiaoyc/xqw/nvhpc
+module use $NVHPC_ROOT/modulefiles
+module load nvhpc-hpcx
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=list
+  # srun --mpi=pmi_v3 -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+## 附录九：OMP_NUM_THREADS 对性能的影响
+
+在使用 OpenMP 进行并行计算时，`OMP_NUM_THREADS` 环境变量指定了每个 MPI 进程使用的线程数。合理设置这个值可以显著提高性能，但过高或过低都可能导致性能下降。在提供的作业脚本中，`OMP_NUM_THREADS` 被设置为 `SLURM_CPUS_PER_TASK` 的值，这通常是每个任务分配的 CPU 核心数。更改 `--cpus-per-task` 参数即调整 `OMP_NUM_THREADS` 的值。
+
+下面以 Intel 编译器在 case 2 上为例，展示 `OMP_NUM_THREADS` 对性能的影响。
+
+| OMP_NUM_THREADS | 运行时间 |
+|:------------------:|:----------:|
+| 1                | 8.17500805854797 s |
+| 2                | 7.92250204086304 s  |
+| 4                | 7.98454308509827 s |
+| 8                | 8.02640581130981 s  |
+| 16               | 9.08874893188477 s  |
+
+![](/images/omp_num_threads.png)
+
+::: warning 也许？
+如果你能在报告中展示 OMP_NUM_THREADS 对其他编译器（如 GNU、AOCC、NVHPC 等）的影响，那就更好了！
+:::
+
+
+## 附录十：核数对性能的影响
+
+下面以 Intel 编译器在 case 2 上为例，展示核数对性能的影响。（OMP_NUM_THREADS=2）
+
+| 总核心数 | 1个节点 | 2个节点
+|:------:|:--------:|:--------:|
+| 8      | 64.5869278907776 s | 61.6611549854279 s |
+| 16     | 33.7711331844330 s | 32.0495719909668 s |
+| 32     | 19.7675180435181 s | 17.2381088733673 s |
+| 48     | 16.0617241859436 s | 12.2575910091400 s |
+| 64     | 每节点最多48核 | 9.98219609260559 s |
+| 96     | 每节点最多48核 | 7.92250204086304 s |
+
+![](/images/scaling.png)
+
+从 8 到 32 核，两条曲线都几乎按理想比例下降：当核心数翻倍，运行时间大约减半，说明计算部分仍是可并行的、通信压力也不高。单节点在 48 核附近触及硬件上限，继续增核只能依赖 SMT，增益有限；而把任务拆到第二节点后，64 核与 96 核仍能显著缩短时间，但加速比已不足线性，原因是跨节点通信、远端内存访问和调度开销开始占优。
+
+同样的总核心数拆成双节点后反而更快，主要是因为内存子系统的资源翻倍，而通信开销并没有同比增长。
+
+在单节点里，所有核心共用同一块内存控制器和有限的 L3/L2 缓存，竞争激烈；一旦任务属于内存绑定型，核心大部分时间都在等待数据。把一半核心挪到另一台节点，相当于额外获得了一套独立的内存控制器、完整的缓存层级以及更宽的总线带宽。每个核心可用的有效 DRAM 带宽几乎加倍，缓存冲突率也随之下降，等待时间显著缩短。
+
+至于跨节点的 MPI 通信，它在这个案例中体量不大、延迟容忍度又高，几十微秒的网络往返不足以抵消内存加速带来的收益。另外，单节点把所有物理核心都跑满时，CPU 为了控制功耗往往会降频；分成两台机器后，每个 CPU 只用一半核心，能维持更接近睿频的时钟，也进一步拉开了差距。
+
+综合来看，双节点配置凭借更高的可用内存带宽、更大的有效缓存和略高的核心频率，即便在相同的总核心数下，也能跑出更短的总时间。
+
+::: warning 也许？
+如果你能在报告中展示不同编译器（如 GNU、AOCC、NVHPC 等）在不同核数下的性能变化，那就更好了！
+:::
+
+## 附录十一：性能分析
+
+### Intel MPI 内置统计
+
+在 `mpirun` 之前加上：
+
+```bash
+export I_MPI_STATS=5          # 0=off, 1~10 越大信息越多
+```
+
+作业结束后就会看到一个 `aps_result_YYYYMMDD_HHMMSS/` 目录，执行
+
+```bash
+aps-report aps_result_YYYYMMDD_HHMMSS   # 纯文本报告
+# 或
+aps --report aps_result_YYYYMMDD_HHMMSS # 生成 HTML，可浏览器查看
+```
+
+![](/images/impi_prof.png)
+
+这份 APS 摘要说明，真正拖慢总运行时间的，不是 MPI 通信，也不是 OpenMP 线程等待，而是核内计算效率：
+
+- MPI 只占 1.19 %，其中等待不平衡（Imbalance）仅 0.8 %。Allreduce 和 Waitall 的累计时间加起来不到 4.5 秒，表明跨进程同步基本不会限制扩展性。
+- OpenMP 不平衡占 0.41 %，说明 2 个线程／Rank 的并行区大体均衡；线程间的 idle 很少，不必从再调 OMP_NUM_THREADS角度着手。
+- CPU 利用率仍然偏低。APS 直接给出提示：“可能计算负载不足、同步过频或 I/O 过多导致逻辑核心未被充分利用”。既然 MPI 和 OpenMP 等候时间都很小，可排除同步过频；I/O 时间计为 0，也排除过多 I/O。剩下唯一合理解释是核心在算术或访存阶段效率不高——要么内存带宽受限，要么向量化程度不足，要么两者兼有。
+- 内存占用：每节点常驻 53 GB，远未逼近常见 192 GB-512 GB 的节点内存上限；每 Rank 常驻 2.2 GB。说明单条数据就能完整放进内存，CPU 仍旧等数据，更像带宽或缓存命中率问题，而非容量不足。
+
+### Intel VTune Profiler
+
+::: danger
+VTune 暂时缺少某个驱动，有些功能无法使用
+:::
+
+那么接下来，我们采用更加强力的 Intel VTune Profiler 进行性能分析。
+
+首先带上 `-g` 重新编译 CloverLeaf，做法是在 `CFLAGS_INTEL` 和 `FLAGS_INTEL` 中添加 `-g` 选项，然后
+
+```bash
+make COMPILER=INTEL MPI_COMPILER=mpiifort C_MPI_COMPILER=mpiicc
+```
+
+然后把 `job.intel.slurm` 中的 `mpirun` 命令改为：
+
+```bash
+export VTUNE_PROFILER_LOG_DIR=$HOME/.vtune-logs
+mkdir -p $VTUNE_PROFILER_LOG_DIR
+
+which vtune               # 路径应指向 oneAPI/vtune/bin64/vtune
+vtune --version           # 打印版本号
+vtune --help collect       # 能列出全部 analysis types
+
+vtune -collect memory-access -result-dir vtune_${SLURM_JOB_ID} -- mpirun -n $SLURM_NTASKS ./clover_leaf
+# 这里 memory-access 是分析类型，其他类型可参考 `vtune --help collect` 的输出
+vtune -collect hotspots -result-dir vtune_${SLURM_JOB_ID} -- mpirun -n $SLURM_NTASKS ./clover_leaf
+# 也可以去收集热点信息
+```
+
+收集完后生成报告：
+
+```bash
+vtune -report summary -result-dir vtune_${SLURM_JOB_ID} > vtune_summary.txt
+vtune -report hotspots -result-dir vtune_${SLURM_JOB_ID} > vtune_hotspots.txt
+vtune -report memory-access -result-dir vtune_${SLURM_JOB_ID} > vtune_memory_access.txt
+```
+
+### gprof
+
+如果你使用 GNU 编译器，可以使用 `gprof` 进行性能分析。
+
+首先，确保在编译时启用了 `-pg` 选项，可以在 `CFLAGS_GNU` 和 `FLAGS_GNU` 中添加 `-pg`，并暂时把优化等级调为 `-O2`。然后重新编译 CloverLeaf：
+
+```bash
+make COMPILER=GNU
+```
+
+编译完成后，修改 `job.gnu.slurm` 中的 `mpirun` 命令为：
+
+```bash
+# `GMON_OUT_PREFIX` 能让每个 rank 写成 gmon.<rank>.<pid>，避免互相覆盖。
+mpirun -n "$NP" env GMON_OUT_PREFIX="gmon.$SLURM_PROCID." ./clover_leaf
+# 把所有 gmon.* 累加进 gmon.sum
+gprof -s ./clover_leaf gmon.*             
+# 再生成汇总报告
+gprof ./clover_leaf gmon.sum > report_all.txt
+```
+
+如果想要可视化：
+
+```bash
+pip install gprof2dot graphviz
+gprof2dot -f gprof report_all.txt | dot -Tpng -o callgraph.png
+```
+
+![](/images/callgraph.png)
+
+![](/images/pie.png)
+
+再针对热点函数进行优化。
+
+## 附录十二：赛中评测细分
+
+```
+Team 1:
+  gnu: 9.9811 (1st), 10.0156 (2nd)
+  intel: 10.7531 (1st), 10.7298 (2nd)
+  total: 41.4796
+
+Team 10:
+  gnu: 10.005 (1st), 9.9938 (2nd)
+  intel: 9.9984 (1st), 10.1303 (2nd)
+  total: 40.127500000000005
+
+Team 13:
+  intel: 13.3421 (1st), 12.2373 (2nd)
+  aocc: 4.0123 (1st), 6.5633 (2nd)
+  total: 36.155
+
+Team 16:
+  intel: 10.0037 (1st), 10.1432 (2nd)
+  total: 20.146900000000002
+```
+
 
 ---
 
