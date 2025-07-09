@@ -700,6 +700,7 @@ OpenMP 版本不匹配
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
 #SBATCH --export=NONE
+#SBATCH --exclusive
 
 # 注意：比赛环境为 2 节点，每节点 48 核
 # 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
@@ -1065,8 +1066,8 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 | GNU | Intel | AOCC | HPC-X\* | MVAPICH | MPICH | NVHPC |
 |:----------------:|:---:|:-----:|:----:|:-----:|:-------:|:-------:|:-----:|
-| 1 | 1033.1695 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
-| 2 | 17.6088 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
+| 1 | 1033.1695 s | 519.8045 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
+| 2 | 17.6088 s | 8.0040 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
 
 ::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
 :::
@@ -1141,6 +1142,7 @@ make COMPILER=AOCC
 #SBATCH --ntasks=48            # 可以更改
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --exclusive
 
 # 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
 
@@ -1326,7 +1328,7 @@ Wall clock per case:
 ### 使用 GNU 编译器
 
 ::: warning 重要更新
-安装 GCC 15.1 的时候需要带上一些优化选项，否则性能会很差。
+安装 GCC 15.1 的时候需要带上一些优化选项，否则性能会差一些。
 :::
 
 这里给出一种自己编译安装的通用做法，既不会用到系统自带 GCC 8.5，也能确保 OpenMPI 5.0.8 完全用 GCC 15.1 编译。
@@ -1435,6 +1437,7 @@ make COMPILER=GNU
 #SBATCH --ntasks=48            # 可以更改
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --exclusive
 
 # 注意：这里不能不继承环境变量，否则 slurmstepd 调不到 prted
 
@@ -1674,6 +1677,7 @@ export LD_LIBRARY_PATH=<CloverLeaf所在位置>:$LD_LIBRARY_PATH
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
 #SBATCH --export=ALL
+#SBATCH --exclusive
 
 lscpu
 
@@ -1833,6 +1837,7 @@ nvfortran-Warning-The option -Mipa has been deprecated and is ignored
 #SBATCH --ntasks-per-node=24   # 可以更改
 #SBATCH --cpus-per-task=2      # 可以更改
 #SBATCH --export=ALL
+#SBATCH --exclusive
 
 # 注意：比赛环境为 2 节点，每节点 48 核
 # 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
