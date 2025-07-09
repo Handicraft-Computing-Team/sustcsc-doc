@@ -1082,7 +1082,7 @@ export CC="gcc -O3 -march=native -flto"
 export CXX="g++ -O3 -march=native -flto"
 export FC="gfortran -O3 -march=native -flto"
 ```
-然后再执行 `./configure --with-slurm --prefix=<安装目录>`。
+在 configure 层面也有很多优化可以做，比如 `./configure --with-slurm --prefix=<安装目录> --一堆优化选项`。这些选项会影响到编译器的优化级别、使用的指令集、链接方式等。可以查看 OpenMPI 的官方文档，了解更多关于编译选项的细节。
 
 当然，这里还有很多的优化可以做（比如 `--with-verbs --with-ucx --with-ofi --with-cuda`），欢迎查看相关发行版的文档（或者询问 ChatGPT）并加以尝试。
 :::
@@ -1351,12 +1351,30 @@ mkdir gcc-15.1.0/build && cd gcc-15.1.0/build
 
 ../contrib/download_prerequisites
 
-../configure --prefix=<你想安装到的位置>/gcc/15.1 \
-             --enable-bootstrap \
-             --enable-languages=c,c++,fortran,lto \
-             --enable-shared --enable-threads=posix \ 
-             --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object \ --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl \ --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-cet \ --with-tune=generic --with-arch_32=x86-64 --build=x86_64-redhat-linux \
-             --disable-multilib
+../configure \
+  --prefix=<你想安装到的位置>/gcc/15.1 \
+  --enable-bootstrap \
+  --enable-languages=c,c++,fortran,lto \
+  --disable-multilib \
+  --with-arch=native --with-tune=native \
+  --with-system-zlib \
+  --enable-shared --enable-threads=posix \
+  --enable-checking=release \
+  --enable-__cxa_atexit \
+  --disable-libunwind-exceptions \
+  --enable-gnu-unique-object \
+  --enable-linker-build-id \
+  --with-gcc-major-version-only \
+  --with-linker-hash-style=gnu \
+  --enable-plugin \
+  --enable-initfini-array \
+  --with-isl \
+  --disable-libmpx \
+  --enable-gnu-indirect-function \
+  --enable-cet \
+  --with-pkgversion="GCC 15.1 (SUSTCSC Customized)" \
+  --with-bugurl="mailto:12211634@mail.sustech.edu.cn" \
+  --build=x86_64-redhat-linux
 
 # 上面这些选项可以通过 gcc -v 来查看，主要是为了模仿发行版 configure 的设置以获得最佳性能
 
@@ -1377,10 +1395,23 @@ wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
 tar -xzf openmpi-5.0.8.tar.gz
 mkdir openmpi-5.0.8/build && cd openmpi-5.0.8/build
 
-../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 --with-slurm \
-             CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
-             CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
-             FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
+export CFLAGS="-O3 -march=native -flto -fno-plt -pipe"
+export CXXFLAGS="$CFLAGS"
+export FCFLAGS="$CFLAGS"
+
+../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 \
+  --with-slurm \
+  --disable-debug --disable-logging --disable-assertions --disable-params-check \
+  --without-memory-manager \
+  --disable-dlopen \
+  --enable-mpi-fortran=all \
+  --enable-mpirun-prefix-by-default \
+  --with-wrapper-cflags="$CFLAGS" \
+  --with-wrapper-cxxflags="$CFLAGS" \
+  --with-wrapper-fflags="$CFLAGS" \
+  CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
+  CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
+  FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
 
 make -j$(nproc)
 make install
