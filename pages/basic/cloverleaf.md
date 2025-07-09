@@ -2072,7 +2072,83 @@ gprof2dot -f gprof report_all.txt | dot -Tpng -o callgraph.png
 
 再针对热点函数进行优化。
 
-## 附录十二：赛中评测细分
+## 附录十二：Roofline 分析
+
+| 记号          | 含义                          | 典型单位        |
+| ----------- | --------------------------- | ----------- |
+| **P\_peak** | 计算峰值                        | GFLOP/s     |
+| **B\_peak** | 主存带宽峰值                      | GB/s        |
+| **I = F/B** | 算术强度 (Arithmetic Intensity) | FLOP / Byte |
+
+Roofline 模型 (‐Williams 2009) 把一台机器的**计算天花板**
+
+$$
+P_{\text{achievable}}(I)=\min\!\bigl(P_{\text{peak}},\; B_{\text{peak}}\times I\bigr)
+$$
+
+这能够画成一条屋顶一样的线：
+
+* **水平线**：FMA/ADD 峰值吞吐
+* **倾斜线**：带宽 x I
+* 应用核在坐标 $(I,\; GFLOP/s)$ 处落点
+  * **落在斜线上**：memory-bound
+  * **落在水平线附近**：compute-bound
+  * **位于两线之间**：可能由缓存／并发限制
+
+总的来说，在现代处理器上，代码性能既受计算单元吞吐限制，也受内存子系统带宽限制。Roofline 模型把这两种极限画成一条水平线（浮点峰值）和一条向上的斜线（带宽 x 算术强度）。坐标系的横轴是算术强度，即每搬运一个字节数据能够完成多少次浮点运算；纵轴是实际获得的 GFLOP/s。只要把内核测得的 (FLOP/Byte, GFLOP/s) 点放到图上，就能直观判断它究竟受哪条屋顶限制：落在倾斜带宽线附近说明主体瓶颈是内存，落在水平峰值附近才意味着真正的计算受限，其余情况往往是缓存局部性或并发效率没有发挥出来。
+
+在 oneAPI 环境中，只需要一条命令就能让 Advisor 完成两轮分析：Survey 用来统计热点及指令数量，Trip Counts & FLOP 则计量访存字节与实际 FLOPs。示例命令如下（以 case2 为例）：
+
+::: details job.intel.advisor.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=24
+#SBATCH --export=NONE
+#SBATCH --exclusive
+
+source ~/.bashrc
+source /work/share/intel/oneapi-2023.1.0/setvars.sh
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+cp "cases/case2/clover.in" clover.in
+numactl -C 0-23 -m 0 \
+rm -rf ./adv_proj
+advisor --collect=roofline \
+        --project-dir=./adv_proj \
+        -- ./clover_leaf  > run.out 2>&1
+advisor --report=roofline --project-dir=./adv_proj \
+      --format=csv --report-output=roofline.html
+advisor --report=roofline --project-dir=./adv_proj
+```
+:::
+
+可以生成 HTML 文件，或者直接用 advisor-gui 打开可视化界面浏览那张屋顶图。
+
+![](/images/roofline.png)
+
+我们针对 CloverLeaf 使用 3840x2840 的网格和 24 条线程进行了采样。图中所有热点循环的算术强度都集中在 0.07 到 0.18 FLOP/Byte 之间，也就是说每加载一条 64 字节的缓存行，只做几次浮点运算就得继续访存。这类密度远低于 Skylake-SP 拐点所需的三四 FLOP/Byte，因此它们天然是内存型代码。从纵坐标来看，最热的几个循环只能跑到 10 到 20 GFLOP/s，而同一节点的双精度向量 FMA 峰值接近 2000 GFLOP/s，显然计算单元几乎是空闲的。
+
+更值得注意的是，这些点并没有贴在 DRAM 带宽屋顶上，而是在其下方约一半的位置。也就是说，带宽并非被硬件极限卡死，而是访问模式、NUMA 亲和或不规则 stride 让有效带宽损失了一半。这也能解释为什么即使我尝试手工写 AVX 指令，运行时间几乎没变，因为瓶颈根本不在算术吞吐。如果把内核迁移到有 HBM 或 GPU 的更高带宽平台，往往能一次性把性能提升一个量级。后续优化应聚焦于访存模式、NUMA 亲和和数据布局，而非堆砌指令级并行。
+
+::: warning 也许？
+如果你能在报告中展示不同情况下的 Roofline 分析结果，那就更好了！
+:::
+
+## 附录十三：赛中评测细分
+
+最近更新：2025/07/09
 
 ```
 Team 1:
@@ -2095,6 +2171,11 @@ Team 16:
   total: 20.146900000000002
 ```
 
+## 附录十四：报告指导性模板
+
+可以参考这个 [HPC-AI Team Interview PPT 模板](http://hpcadvisorycouncil.com/events/student-cluster-competition/uploads/ISC-Team-Interview-Template.pptx)。
+
+（并不是说要做个 PPT，只是说可以参考这个模板的内容和结构来撰写报告）
 
 ---
 
