@@ -1065,26 +1065,14 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 | GNU | Intel | AOCC | HPC-X\* | MVAPICH | MPICH | NVHPC |
 |:----------------:|:---:|:-----:|:----:|:-----:|:-------:|:-------:|:-----:|
-| 1 | 1035.6940 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
-| 2 | 17.6651 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
+| 1 | 1033.1695 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
+| 2 | 17.6088 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
 
 ::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
 :::
 
 ::: warning
-没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC 等）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
-
-那么怎么让自编译版也跟系统包一样快呢？最简单的当然是修改编译选项啦。Open MPI 本身就是代码在跑 MPI 调用时的内核，它内部怎样被编译、和硬件/调度器怎样对接，会直接决定通信延迟、带宽、进程启动时间以及锁粒度等细节；这些都会体现在最终应用的运行效率上。
-
-比如在 `./configure` 之前，加上一些编译选项：
-```bash
-export CC="gcc -O3 -march=native -flto"
-export CXX="g++ -O3 -march=native -flto"
-export FC="gfortran -O3 -march=native -flto"
-```
-在 configure 层面也有很多优化可以做，比如 `./configure --with-slurm --prefix=<安装目录> --一堆优化选项`。这些选项会影响到编译器的优化级别、使用的指令集、链接方式等。可以查看 OpenMPI 的官方文档，了解更多关于编译选项的细节。
-
-当然，这里还有很多的优化可以做（比如 `--with-verbs --with-ucx --with-ofi --with-cuda`），欢迎查看相关发行版的文档（或者询问 ChatGPT）并加以尝试。
+没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC 等）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。如果可以，欢迎选择下载发行的二进制版本而不是从源码开始编译。
 :::
 
 ## 附录二：安装并使用 AOCC 编译器
@@ -1395,20 +1383,19 @@ wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.8.tar.gz
 tar -xzf openmpi-5.0.8.tar.gz
 mkdir openmpi-5.0.8/build && cd openmpi-5.0.8/build
 
-export CFLAGS="-O3 -march=native -flto -fno-plt -pipe"
+export CFLAGS="-O3 -march=native -fno-plt -pipe"
 export CXXFLAGS="$CFLAGS"
 export FCFLAGS="$CFLAGS"
 
 ../configure --prefix=<你想安装到的位置>/openmpi/5.0.8-gcc15 \
   --with-slurm \
-  --disable-debug --disable-logging --disable-assertions --disable-params-check \
+  --disable-debug \
   --without-memory-manager \
   --disable-dlopen \
   --enable-mpi-fortran=all \
   --enable-mpirun-prefix-by-default \
   --with-wrapper-cflags="$CFLAGS" \
   --with-wrapper-cxxflags="$CFLAGS" \
-  --with-wrapper-fflags="$CFLAGS" \
   CC=<你安装GCC的位置>/gcc/15.1/bin/gcc \
   CXX=<你安装GCC的位置>/gcc/15.1/bin/g++ \
   FC=<你安装GCC的位置>/gcc/15.1/bin/gfortran
