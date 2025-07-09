@@ -345,7 +345,7 @@ chmod +x wrf_verify.sh #这个命令只需执行一次
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### b（40分）
 
@@ -405,7 +405,7 @@ time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### c（40分）
 
@@ -420,12 +420,25 @@ time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map
 - wrf_timing.sh 结果截图
 - wrf_verify.sh 结果截图
 
-**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input。**
+**注意：namelist.input里的参数（除上述&domains 部分几个参数外）不能修改，提交结果时也需要包含namelist.input**。
 
 ### Bonus（20分）
 
-我们可以尝试在单GPU上运行WRF程序，WRF GPU版本（AceCAST）可以访问：[https://acecast-docs.readthedocs.io/en/latest/index.html](https://acecast-docs.readthedocs.io/en/latest/index.html)
+由于AceCAST需要收费才能使用，WRFg也无下载链接，因此之前的WRF GPU挑战无法进行，这里我们设置新的Bonus任务：**即尝试在1小时之内完成对conus 2.5 km数据集6小时的模拟量（同样使用4个CPU节点，96核）**。
 
-对于算例可以参考：[https://acecast-docs.readthedocs.io/en/latest/Benchmarks.html#ncar-standard-benchmark-test-cases](https://acecast-docs.readthedocs.io/en/latest/Benchmarks.html#ncar-standard-benchmark-test-cases)
+我们会提供`namelist.input.bonus`，注意对于namelist.input里的参数，除了以下几个参数可以修改，其他参数严禁修改：
 
-如果参赛队伍能成功运行GPU版本的WRF程序并获得结果，便可获得额外的20分奖励。
+```shell
+&domains  
+  numtiles   = 1  
+  nproc_x    = -1  
+  nproc_y    = -1  
+/
+
+&namelist_quilt
+nio_tasks_per_group = 0,
+nio_groups = 1,
+ /
+```
+
+如果参赛队伍能成功在1小时之内完整模拟并获得结果（同时最后通过正确性验证），便可获得额外的20分奖励。**请注意，Bonus的成绩不参与打榜环节，这里我们也不提供用于正确性验证的参考结果，我们会在比赛结束后统一验证，请将Bonus任务中涉及的所有优化的过程和结果在最终报告中写明**。
