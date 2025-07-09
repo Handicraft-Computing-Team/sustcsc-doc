@@ -441,4 +441,10 @@ nio_groups = 1,
  /
 ```
 
+此外，在作业脚本里可以添加`time -p`至程序运行的命令处用于计时（计时结果会输出到日志里），如：
+
+```shell
+time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map-by ppr:$ppr:node:pe=$numtiles ./wrf.exe
+```
+
 如果参赛队伍能成功在1小时之内完整模拟并获得结果（同时最后通过正确性验证），便可获得额外的20分奖励。**请注意，Bonus的成绩不参与打榜环节，这里我们也不提供用于正确性验证的参考结果，我们会在比赛结束后统一验证，请将Bonus任务中涉及的所有优化的过程和结果在最终报告中写明**。
