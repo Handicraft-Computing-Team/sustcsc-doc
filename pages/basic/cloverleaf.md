@@ -1,6 +1,5 @@
 ---
 title: CloverLeaf 编译优化挑战
-outline: ['2', '3']
 ---
 
 <script setup lang="ts">
@@ -1974,6 +1973,60 @@ fi
 如果你能在报告中展示不同编译器（如 GNU、AOCC、NVHPC 等）在不同核数下的性能变化，那就更好了！
 :::
 
+## 附录十一：性能分析
+
+### Intel MPI 内置统计
+
+在 `mpirun` 之前加上：
+
+```bash
+export I_MPI_STATS=5          # 0=off, 1~10 越大信息越多
+```
+
+作业结束后就会看到一个 `aps_result_YYYYMMDD_HHMMSS/` 目录，执行
+
+```bash
+aps-report aps_result_YYYYMMDD_HHMMSS   # 纯文本报告
+# 或
+aps --report aps_result_YYYYMMDD_HHMMSS # 生成 HTML，可浏览器查看
+```
+
+![](/images/impi_prof.png)
+
+这份 APS 摘要说明，真正拖慢总运行时间的，不是 MPI 通信，也不是 OpenMP 线程等待，而是核内计算效率：
+
+- MPI 只占 1.19 %，其中等待不平衡（Imbalance）仅 0.8 %。Allreduce 和 Waitall 的累计时间加起来不到 4.5 秒，表明跨进程同步基本不会限制扩展性。
+- OpenMP 不平衡占 0.41 %，说明 2 个线程／Rank 的并行区大体均衡；线程间的 idle 很少，不必从再调 OMP_NUM_THREADS角度着手。
+- CPU 利用率仍然偏低。APS 直接给出提示：“可能计算负载不足、同步过频或 I/O 过多导致逻辑核心未被充分利用”。既然 MPI 和 OpenMP 等候时间都很小，可排除同步过频；I/O 时间计为 0，也排除过多 I/O。剩下唯一合理解释是核心在算术或访存阶段效率不高——要么内存带宽受限，要么向量化程度不足，要么两者兼有。
+- 内存占用：每节点常驻 53 GB，远未逼近常见 192 GB-512 GB 的节点内存上限；每 Rank 常驻 2.2 GB。说明单条数据就能完整放进内存，CPU 仍旧等数据，更像带宽或缓存命中率问题，而非容量不足。
+
+### Intel VTune Profiler
+
+::: danger
+VTune 暂时缺少某个驱动，有些功能无法使用
+:::
+
+那么接下来，我们采用更加强力的 Intel VTune Profiler 进行性能分析。
+
+首先带上 `-g` 重新编译 CloverLeaf，做法是在 `CFLAGS_INTEL` 和 `FLAGS_INTEL` 中添加 `-g` 选项，然后
+
+```bash
+make COMPILER=INTEL MPI_COMPILER=mpiifort C_MPI_COMPILER=mpiicc
+```
+
+然后把 `job.intel.slurm` 中的 `mpirun` 命令改为：
+
+```bash
+export VTUNE_PROFILER_LOG_DIR=$HOME/.vtune-logs
+mkdir -p $VTUNE_PROFILER_LOG_DIR
+
+which vtune               # 路径应指向 oneAPI/vtune/bin64/vtune
+vtune --version           # 打印版本号
+vtune --help collect       # 能列出全部 analysis types
+
+vtune -collect memory-access -result-dir vtune_${SLURM_JOB_ID} -- mpirun -n $SLURM_NTASKS ./clover_leaf
+# 这里 memory-access 是分析类型，其他类型可参考 `vtune --help collect` 的输出
+```
 
 ---
 
