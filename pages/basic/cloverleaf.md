@@ -1061,10 +1061,15 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 基准时间可能会更新。
 :::
 
-| 算例 \ 参考时间 | GNU | Intel | AOCC | HPC-X | MVAPICH |
-|:----------------:|:---:|:-----:|:----:|:-----:|:-------:|
-| case 1 | 1035.6940 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s |
-| case 2 | 17.6651 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s |
+基准时间：
+
+| 算例 | GNU | Intel | AOCC | HPC-X\* | MVAPICH | MPICH | NVHPC |
+|:----------------:|:---:|:-----:|:----:|:-----:|:-------:|:-------:|:-----:|
+| 1 | 1035.6940 s | 375.2857 s | 1111.9942 s | 811.9700 s | 519.0863 s | -- | 818.3194 s |
+| 2 | 17.6651 s | 5.8198 s | 30.2586 s | 13.7310 s | 8.2421 s | -- | 20.5116 s |
+
+::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
+:::
 
 ::: warning
 没错，你发现了非手动安装的（Intel）比手动安装（GNU、AOCC 等）的要快很多，一方面是因为集群的节点都是 Intel 的，另一方面，这是因为发行版自带的编译器已经经过了很多优化。
@@ -1332,6 +1337,10 @@ Wall clock per case:
 
 ### 使用 GNU 编译器
 
+::: warning 重要更新
+安装 GCC 15.1 的时候需要带上一些优化选项，否则性能会很差。
+:::
+
 这里给出一种自己编译安装的通用做法，既不会用到系统自带 GCC 8.5，也能确保 OpenMPI 5.0.8 完全用 GCC 15.1 编译。
 
 1. 编译并安装 GCC 15.1
@@ -1343,8 +1352,13 @@ mkdir gcc-15.1.0/build && cd gcc-15.1.0/build
 ../contrib/download_prerequisites
 
 ../configure --prefix=<你想安装到的位置>/gcc/15.1 \
-             --enable-languages=c,c++,fortran \
+             --enable-bootstrap \
+             --enable-languages=c,c++,fortran,lto \
+             --enable-shared --enable-threads=posix \ 
+             --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object \ --enable-linker-build-id --with-gcc-major-version-only --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl \ --disable-libmpx --enable-offload-targets=nvptx-none --without-cuda-driver --enable-gnu-indirect-function --enable-cet \ --with-tune=generic --with-arch_32=x86-64 --build=x86_64-redhat-linux \
              --disable-multilib
+
+# 上面这些选项可以通过 gcc -v 来查看，主要是为了模仿发行版 configure 的设置以获得最佳性能
 
 make -j$(nproc)
 make install
@@ -1721,6 +1735,167 @@ fi
 ```
 :::
 
+## 附录七：安装并使用 MPICH
+
+::: warning
+结果尚未验证，敬请期待。
+:::
+
+MPICH 是阿贡国家实验室 (Argonne National Laboratory) 发布的高性能、可广泛移植的 MPI-4.1 标准实现。此版本具备该标准所需的所有 MPI 4.1 功能和特性，但不支持用户定义的 I/O 数据表示，是很多研究 MPI 特性的基线。本次比赛中，MPICH 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
+
+进入[官网](https://www.mpich.org/downloads/)，选择下载 mpich-4.3.1 (stable release)	。
+
+```bash
+wget https://www.mpich.org/static/downloads/4.3.1/mpich-4.3.1.tar.gz
+tar -xzf mpich-4.3.1.tar.gz
+cd mpich-4.3.1
+./configure --prefix=<你想安装到的目录>/mpich
+make -j$(nproc) && make install
+```
+
+配置环境变量：
+
+```bash
+export PATH=<你安装到的目录>/mpich/bin:$PATH
+export LD_LIBRARY_PATH=<你安装到的目录>/mpich/lib:$LD_LIBRARY_PATH
+export MANPATH=<你安装到的目录>/mpich/man:$MANPATH
+```
+
+进入 `CloverLeaf_SCC/` 目录，使用 MPICH 编译 CloverLeaf：
+
+```bash
+make COMPILER=GNU
+```
+
+作业脚本不赘述。
+
+## 附录八：安装并使用 NVIDIA HPC SDK
+
+NVIDIA HPC SDK C、C++ 和 Fortran 编译器支持使用标准 C++ 和 Fortran、OpenACC® 指令以及 CUDA® 对 HPC 建模和仿真应用程序进行 GPU 加速。GPU 加速数学库可最大程度提升常见 HPC 算法的性能，而优化的通信库则支持基于标准的多 GPU 和可扩展系统编程。性能分析和调试工具可简化 HPC 应用程序的移植和优化，而容器化工具则可轻松实现本地或云端部署。HPC SDK 支持 NVIDIA GPU 以及运行 Linux 的 Arm 或 x86-64 CPU，可提供构建 NVIDIA GPU 加速 HPC 应用程序所需的工具。本次比赛中这个赛题不会提供 GPU，但 NVIDIA HPC SDK 也可以在 没有 GPU 的机器上安装，只是 GPU 专属库（cuBLAS、cuFFT 等）和 Nsight Compute/Systems 无法运行。NVHPC 基准分数为 4 分（而不是 10 分）。
+
+下载并安装：
+
+```bash
+wget https://developer.download.nvidia.com/hpc-sdk/25.5/nvhpc_2025_255_Linux_x86_64_cuda_12.9.tar.gz
+tar xpzf nvhpc_2025_255_Linux_x86_64_cuda_12.9.tar.gz
+nvhpc_2025_255_Linux_x86_64_cuda_12.9/install # 注意要选 Network Install
+```
+
+安装完成后，命令行中会显示配置环境变量的方法，建议记下来。比如，如果你喜欢使用 `module load`，那么命令大概是：
+
+```bash
+module load <xxx>/modulefiles/nvhpc/25.5
+```
+
+编译 CloverLeaf：
+
+```bash
+make COMPILER=PGI
+```
+
+然而，PGI 被 NVIDIA 收购之后，nvfortran >= 24.x 把 PGI 时代的 -Mipa 家族全部合并进新 IP 优化管线，如果你收到了下面的警告：
+
+```bash
+nvfortran-Warning-The option -Mipa has been deprecated and is ignored
+```
+
+你可以把 `-Mipa=fast` 改为 `-O3`。
+
+示例作业脚本如下（记得改路径）：
+
+::: details job.nvhpc.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=ALL
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+module purge
+export NVHPC_ROOT=/work/ccse-xiaoyc/xqw/nvhpc
+module use $NVHPC_ROOT/modulefiles
+module load nvhpc-hpcx
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=list
+  # srun --mpi=pmi_v3 -n "$NP" ./clover_leaf
+  mpirun -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
 
 ---
 
