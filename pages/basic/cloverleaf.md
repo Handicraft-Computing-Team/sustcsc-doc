@@ -556,8 +556,8 @@ Terminated with exit code 137
 
 设
 
-* $A\_{\text{ref},CL,i}$：参考实现 (`CloverLeaf_ref`) 用编译器 $CL$ 在算例 $i$ 上的耗时；
-* $A\_{\text{sub},CL,i}$：选手提交（可为 *ref* 或 *Bonus CPU* 实现）用编译器 $CL$ 在算例 $i$ 上的耗时。
+* $A_{\text{ref},CL,i}$：参考实现 (`CloverLeaf_ref`) 用编译器 $CL$ 在算例 $i$ 上的耗时；
+* $A_{\text{sub},CL,i}$：选手提交（可为 *ref* 或 *Bonus CPU* 实现）用编译器 $CL$ 在算例 $i$ 上的耗时。
 
 每个 *(实现,编译器,算例)* 的得分为
 
