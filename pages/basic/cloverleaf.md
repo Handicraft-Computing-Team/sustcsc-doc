@@ -2148,7 +2148,9 @@ advisor --report=roofline --project-dir=./adv_proj
 
 这其实能部分解释为什么 MVAPICH 比 GNU+OpenMPI 快很多。先回到 Roofline 那张图，那张图说的是节点内部的算术和访存关系，算术单元空闲而内存带宽成为第一瓶颈。也就是说，只要数据已经在本地内存里，换成更强的矢量指令或者更快的 CPU 并不会把时间缩短很多。
 
-MPI 库的差别属于另一条链路：节点间通信。CloverLeaf 每一次 X-或 Y-sweep 都要做 halo 交换：把边界两列（或两行）的密度、能量、质量通量发给相邻进程。网格越大、进程越多，通信-计算重叠做得好不好就越重要。这里就轮到 MPI 实现出场了。MVAPICH 针对 IB/RDMA 做了零拷贝 pipeline、长消息 rendezvous、短消息 eager RDMA，再加上后台异步进展线程，能够实打实把带宽做满、把延迟压低；OpenMPI 如果用默认 UCX 或 ob1‐openib 路径，长消息通常走 copy-in/copy-out rendezvous，短消息走 eager 拷贝，再加上没有启用异步进展，很容易在 MPI_Waitall 上把核心挂住。整套应用运行时间可以写成两块相加：
+MPI 库的差别属于另一条链路：节点间通信。CloverLeaf 每一次 X-或 Y-sweep 都要做 halo 交换：把边界两列（或两行）的密度、能量、质量通量发给相邻进程。网格越大、进程越多，通信-计算重叠做得好不好就越重要。这里就轮到 MPI 实现出场了。MVAPICH 针对 IB/RDMA 做了零拷贝 pipeline、长消息 rendezvous、短消息 eager RDMA，再加上后台异步进展线程，能够实打实把带宽做满、把延迟压低；OpenMPI 如果用默认 UCX 或 ob1‐openib 路径，长消息通常走 copy-in/copy-out rendezvous，短消息走 eager 拷贝，再加上没有启用异步进展，很容易在 MPI_Waitall 上把核心挂住。
+
+其实，整套应用运行时间可以写成两块相加：
 
 ```
 T_total = T_compute_on_node  +  T_wait_for_halo
@@ -2174,7 +2176,279 @@ Roofline 帮助我们看清 T_compute_on_node；而 MVAPICH 快一倍说明 T_wa
 同样让 GCC 编译版本加上 `-march=skylake-avx512 -flto`，不要只用默认 `-O3`。这样会更快了吗？
 :::
 
-## 附录十三：赛中评测细分
+## 附录十三：使用 Spack 管理依赖
+
+<div align="center">
+  <img src="/images/spack-logo-white-text.svg" style="background-color: #1f77b4; padding: 0.5rem; border-radius: 0.5rem;" alt="Spack Logo" />
+</div>
+
+[Spack](https://spack.readthedocs.io/en/latest/index.html) 是一款软件包管理工具，旨在支持各种平台和环境下的多种软件版本和配置。它专为大型超级计算中心而设计，在这些中心，许多用户和应用程序团队使用不具备标准 ABI 的库，在架构各异的集群上共享通用的软件安装。Spack 具有非破坏性：安装新版本不会破坏现有安装，因此多种配置可以在同一系统上共存。
+
+### 安装 Spack
+
+```bash
+cd ~
+git clone https://github.com/spack/spack
+source ~/spack/share/spack/setup-env.sh
+```
+
+::: warning 注意
+提交的作业脚本中也需要添加 `source ~/spack/share/spack/setup-env.sh`，以确保 Spack 环境变量正确设置。
+:::
+
+### 使用 Spack 安装并使用 CloverLeaf
+
+这里先安装一个 oneAPI 套件的版本：
+
+```bash
+spack install cloverleaf-ref@1.3 %oneapi ^intel-oneapi-mpi
+```
+
+`%oneapi` 指定用 oneAPI 编译所有东西，一些常见的选项还有 `%gcc`、`%intel`、`%nvhpc` 等。
+
+`^intel-oneapi-mpi` 指定使用 Intel 的 MPI 实现，一些常见的实现选项有 `^openmpi`、`^mvapich2`、`^mpich` 等。
+
+出现 `cloverleaf-ref: Successfully installed cloverleaf-ref-1.3-....` 则说明安装成功。
+
+从此以后，就可以使用
+
+```bash
+spack load cloverleaf-ref@1.3 %oneapi
+```
+
+来加载 CloverLeaf 的环境了。
+
+但是由于计算节点上没有 git，所以我们得先自己安装一个：
+
+```bash
+curl -L https://github.com/git/git/archive/refs/tags/v2.45.2.tar.gz | tar xzf -
+cd git-2.45.2
+make prefix=$HOME/opt/git install
+```
+
+然后在作业脚本中加入：
+
+```bash
+export PATH=$HOME/opt/git/bin:$PATH
+```
+
+::: 注意
+`clover_leaf` 的输入文件是从**工作**目录的 `clover.in` 中读取的。
+:::
+
+示例作业脚本如下：
+
+::: details job.intel.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48
+#SBATCH --ntasks-per-node=24   # 更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=NONE
+#SBATCH --exclusive
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+export PATH=$HOME/opt/git/bin:$PATH
+source ~/spack/share/spack/setup-env.sh
+spack load cloverleaf-ref@1.3 %oneapi
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{2..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+  
+  EXE=$(which clover_leaf)
+  EXE_DIR=$(dirname "$EXE")
+  cp "cases/case${i}/clover.in" .
+
+  mpirun -n "$NP" "$EXE"
+
+  mv "clover.out" "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+### Spack 与编译选项优化
+
+Spack 提供给我们了编译器，我们也可以自己来编译 CloverLeaf。`spack load cloverleaf-ref@1.3 %oneapi` 之后，执行
+
+```bash
+which mpiifx
+which mpiicx
+```
+
+都有输出，说明用上了 oneAPI 最新的编译器。
+
+编译 CloverLeaf：
+
+```bash
+make COMPILER=INTEL MPI_COMPILER=mpiifx C_MPI_COMPILER=mpiicx
+```
+
+再把作业脚本改回去：
+
+::: details job.intel.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48
+#SBATCH --ntasks-per-node=24   # 更改
+#SBATCH --cpus-per-task=2      # 可以更改
+#SBATCH --export=NONE
+#SBATCH --exclusive
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+export PATH=$HOME/opt/git/bin:$PATH
+source ~/spack/share/spack/setup-env.sh
+spack load intel-oneapi-compilers@2023.1.0
+spack load intel-oneapi-mpi@2021.16.0
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+  
+  cp "cases/case${i}/clover.in" .
+
+  mpirun -n "$NP" ./clover_leaf
+
+  mv "clover.out" "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
+
+::: info 提示
+由于 Intel 的 baseline 性能过好，如果想要收益更大的话，可以尝试用 Spack 安装 GNU 编译器或者 AOCC 编译器，然后编译 CloverLeaf。
+:::
+
+## 附录十四：赛中评测细分
 
 最近更新：2025/07/09
 
@@ -2199,7 +2473,7 @@ Team 16:
   total: 20.146900000000002
 ```
 
-## 附录十四：报告指导性模板
+## 附录十五：报告指导性模板
 
 可以参考这个 [HPC-AI Team Interview PPT 模板](http://hpcadvisorycouncil.com/events/student-cluster-competition/uploads/ISC-Team-Interview-Template.pptx)。
 
