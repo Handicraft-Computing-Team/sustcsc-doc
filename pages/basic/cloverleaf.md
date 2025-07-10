@@ -2232,7 +2232,7 @@ make prefix=$HOME/opt/git install
 export PATH=$HOME/opt/git/bin:$PATH
 ```
 
-::: 注意
+::: warning 注意
 `clover_leaf` 的输入文件是从**工作**目录的 `clover.in` 中读取的。
 :::
 
