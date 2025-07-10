@@ -529,25 +529,57 @@ Terminated with exit code 137
 ### 规则
 
 #### 代码编写规则
-- **总体要求**：不能修改计时代码，以及计时代码与其他函数的相对位置。  
-- **编程语言**：仅限 **C、C++** 或 **Fortran**，兼容版本不低于 **C11、C++11** 或 **Fortran 2008**。仅保留一个主入口（C/C++ 的 `main` 或 Fortran 的 `program`）。须使用 **MPI-3** 与 **OpenMP-4** 并行。  
-- **算法要求**：不允许修改物理过程。  
-- **输入/输出要求**：不得修改输入、输出文件（`*.in`、`*.out`），输出文件的内容与格式须与参考代码完全一致。  
+
+* **总体要求**：不得修改计时代码，以及计时代码与其他函数的相对位置。
+* **编程语言**：仅限 **C、C++** 或 **Fortran**（版本 ≥ C11、C++11、Fortran 2008）。
+* **算法要求**：禁止改变 CloverLeaf 的物理模型与数值格式；可在保证数值守恒的前提下进行重排、循环分块、SIMD 化等**纯 CPU 优化**。
+* **输入/输出**：不得改动 `*.in`、`*.out` 文件及其格式，输出需与参考结果一致。
+* ****Bonus CPU 实现****：
+  * 允许在 `CloverLeaf_ref` 之外，自行移植或重写 **CPU 版本**（如 CloverLeaf\_OpenMP、OPS/Polyhedral、SYCL/Kokkos 等），编译后仍应生成单一可执行文件。
+  * **不得编译或调用任何 GPU 专用后端**（CUDA、HIP、OpenACC `device_type=gpu`、oneAPI Level Zero 等）；若检测到 GPU 相关符号，视为违规。
+  * 允许依赖集群现有的软件栈；如需额外依赖，请在报告中给出 Spack/Make/CMake 步骤。
 
 #### 测试规则
-- **运行环境**：在竞赛指定计算平台运行，规模≤ 2 个计算节点、无最多核心要求，程序运行时间≤ 30 分钟。  
-- **测试算例**：共 2 个算例，输入文件位于参考代码 `cases` 目录，不得修改 `clover.in`。  
+
+* **运行环境**：竞赛指定 CPU 集群（无 GPU）。规模 ≤ 2 计算节点；不设核心上限；整机运行时间 ≤ 30 分钟。
+* **测试用例**：共 2 组，位于 `cases/`，任何实现都必须使用同一份 `clover.in`。
 
 #### 正确性验证
-- 组委会以参考 `clover.out` 为基准验证：计算过程中 **Volume** 与 **Mass** 保持不变，最终 **Kinetic Energy** 与参考值偏差 ≤ ±0.1 %。  
-- 组委会阅读工程文档和代码，以确认优化未改变 **CloverLeaf** 的物理过程。  
-- 若仍无法确认代码正确性，组委会可要求进一步解释，并在不同处理器/参数下复测。**未通过正确性验证的算例，其性能得分计 0 分**。  
 
-#### 性能分数
-- 性能指标 $A_{CL,i}$（单位：秒）代表使用编译器 $CL$ 在算例 $i$ 上的耗时，取自 `clover.out` 最后一行 **"Wall clock"**。   
-- 设使用编译器 $CL$ 在算例 $i$ 的得分为 $M_{CL,i}$，则 $M_{CL,i}=B\times\frac{A_{CL,i}}{A^*_{CL,i}}$，其中 $A_{CL,i}$ 为参考耗时，$A^*_{CL,i}$ 为选手提交的耗时，$B$ 为编译器的性能系数。
-- 性能总分为各编译器各算例得到的性能分数之和，GNU 及 Intel 的 B 值为 10，而其他编译器（作为 bonus）的 B 值为 4.
-- 若 **违反规则、无法复现、篡改输出或恶意利用 Bug**，性能分数记 **0 分**。  
+* 以参考输出 `clover.out` 为基准：
+  * **Volume**、**Mass** 在计算过程中保持守恒；
+  * 最终 **Kinetic Energy** 与参考值偏差 ≤ ±0.5 %。
+* 组委会将审阅代码/文档，确认仅做 **CPU 优化**而未改变物理过程。
+* 必要时可要求参赛队在不同线程数或编译器参数下复测。**任何算例若未通过正确性验证，其性能得分计 0**。
+
+#### 性能评分
+
+设
+
+* \$A\_{\text{ref},CL,i}\$：参考实现 (`CloverLeaf_ref`) 用编译器 \$CL\$ 在算例 \$i\$ 上的耗时；
+* \$A\_{\text{sub},CL,i}\$：选手提交（可为 *ref* 或 *Bonus CPU* 实现）用编译器 \$CL\$ 在算例 \$i\$ 上的耗时。
+
+每个 *(实现,编译器,算例)* 的得分为
+
+$$
+M_{CL,i}=B\times\frac{A_{\text{ref},CL,i}}{A_{\text{sub},CL,i}},
+$$
+
+其中权重 \$B\$ 为
+
+| 代码实现             | 编译器                          | \$B\$  |
+| ---------------- | ---------------------------- | ------ |
+| CloverLeaf\_ref  | GNU / Intel                  | **10** |
+| CloverLeaf\_ref  | 其他编译器（AOCC、Clang 等） | **4**  |
+| **Bonus CPU 实现** | 任何合规编译器（但仅限一个）     | **2**  |
+
+::: danger 非常重要！
+只允许提交一份 **Bonus CPU 实现**而且只计算一个编译器的分数，且必须在 `CloverLeaf_ref` 之外。若提交了多个 Bonus CPU 实现或者一个 Bonus CPU 实现但是多个编译器版本，则根据抓瞎法随机挑选一个实现的性能分。
+:::
+
+**总性能分** 为 ref 版本各编译器两个算例所得 \$M\_{CL,i}\$ 之和再加上 Bonus CPU 实现的得分。
+如发现**违规、结果不可复现、输出被篡改或恶意利用 Bug**，该提交的所有性能分计 **0**。
+
 
 #### 工程分数
 - **工程报告**（PDF）：  
@@ -570,6 +602,10 @@ Terminated with exit code 137
   - 语言精练、资料来源准确、图文并茂 → 3 分  
 
 ### 交付须知
+
+::: warning 注意
+赛中提交格式请见附录四。
+:::
 
 所有提交都需要遵循以下格式。
 
@@ -1534,21 +1570,43 @@ sbatch job.gnu.slurm
 
 对于赛中评测，请确保你的仓库结构如下或者至少包含如下结构：
 
+### 提交目录结构
+
 ```
-CloverLeaf_SCC/
-├── gnu
-│   ├── job.gnu.slurm
-│   ├── <job_id>.err （可选，用于佐证成功运行）
-│   └── <job_id>.out （注意：此处应为 GNU 版本最好的结果）
-├── intel
-│   ├── job.intel.slurm
-│   ├── <job_id>.err （可选，用于佐证成功运行）
-│   └── <job_id>.out （注意：此处应为 Intel 版本最好的结果）
-└── aocc （可选）
-    ├── job.aocc.slurm
-    ├── <job_id>.err （可选，用于佐证成功运行）
-    └── <job_id>.out （注意：此处应为 AOCC 版本最好的结果）
+CloverLeaf_SCC/                       # 顶层文件夹（必须）
+├── README.md                         # 可选，但如果存在 src_bonus/ 则必交：说明是什么版本，使用什么编译器
+│
+├── src_ref/                          # 可选
+│   └── …                             # 可选
+│
+├── src_bonus/                        # 可选：Bonus CPU 版本源码（若有）
+│   └── …
+│
+├── gnu/                              # GNU 编译器跑分
+│   ├── job.gnu.ref.slurm             # 必交：ref 版本作业脚本
+│   ├── job.gnu.bonus.slurm           # 可选：bonus 版本作业脚本
+│   ├── <job_id>_ref.out              # 必交：ref 最佳输出（clover.out）
+│   ├── <job_id>_ref.err              # 可选：对应 stderr
+│   ├── <job_id>_bonus.out            # 可选：bonus 最佳输出
+│   └── <job_id>_bonus.err            # 可选
+│
+├── intel/                            # Intel 编译器跑分
+│   ├── job.intel.ref.slurm
+│   ├── job.intel.bonus.slurm         # 可选
+│   ├── <job_id>_ref.out              # 必交
+│   ├── <job_id>_ref.err              # 可选
+│   ├── <job_id>_bonus.out            # 可选
+│   └── <job_id>_bonus.err            # 可选
+│
+└── aocc/                             # 可选：其他编译器（目录名自取）
+    ├── job.aocc.ref.slurm            # 若提交 ref 成绩则必填
+    ├── job.aocc.bonus.slurm          # 若提交 bonus 成绩则必填
+    ├── <job_id>_ref.out              # 可选
+    ├── <job_id>_ref.err              # 可选
+    ├── <job_id>_bonus.out            # 可选
+    └── <job_id>_bonus.err            # 可选
 ```
+
 
 ## 附录五：安装并使用 HPC-X
 
