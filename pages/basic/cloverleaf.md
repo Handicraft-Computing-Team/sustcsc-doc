@@ -2401,6 +2401,14 @@ which mpiicx
 
 都有输出，说明用上了 oneAPI 最新的编译器。
 
+::: danger 注意
+`mpiicx` 并不完全兼容 `mpiicc`，迁移指南请见：[Porting Guide for ICC Users to DPCPP or ICX](https://www.intel.com/content/www/us/en/developer/articles/guide/porting-guide-for-icc-users-to-dpcpp-or-icx.html).
+:::
+
+::: warning 注意
+最新的 icx 不一定比 icc 快，比如 [Intel ICX C++ compiler often generates slower code](https://stackoverflow.com/questions/79532349/intel-icx-c-compiler-often-generates-slower-code).
+:::
+
 编译 CloverLeaf：
 
 ```bash
