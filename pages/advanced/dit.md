@@ -198,72 +198,78 @@ python sample.py
    - 所有评测将在指定的集群环境和硬件平台上进行
    - 允许自定义环境配置（如 Dockerfile），但需保证可复现性
 
-4. **生成质量验证**  
-   - 请通过 `sample.py` 生成8个标签对应的图片至 `sample.png`
-   - 请使用 `evaluate.py` 评测Baseline图片和代码改动之后生成图片的 `sample.png`，你会看到如下的结果
-   - 最终Pixel-wise Mean Absolute Difference, LPIPS的分数需要满足 $\text{score} \leq 0.01$，SSIM的分数需要满足 $0.99 \leq \text{score} \leq 1.0$，PSNR的分数需要满足 $>40$
+### 生成质量验证 
+   - 由于扩散模型去噪过程中有种子随机性，因此生成质量检测指标将进行修改
+   - 请通过 `sample.py` 生成8组 8个标签对应的图片至 `output` 文件夹中
+   - 请使用 `evaluate.py` 评测Baseline图片和代码改动之后生成图片文件夹的 `output/sample_{id}.png`，你会看到Metrics的生成
+   - 最终Pixel-wise Mean Absolute Difference $\leq 80$, LPIPS的分数需要满足 $\text{score} \leq 0.7$，SSIM的分数需要满足 $\geq 0.3$，PSNR的分数需要满足 $>5$
+   - 由于生成质量较难评估，只要生成质量能够基本反应类别即可
    - 组委会有权要求参赛队伍进一步解释优化方案，并在不同参数或硬件下复测
-```
-=== Image Comparison Metrics ===
-Pixel-wise Mean Absolute Difference: 0.0000
-LPIPS (VGG):                        0.0000
-PSNR:                              inf dB
-SSIM:                              1.0000
-```
 
-5. **评测**
+### 评测
    - 评测模型为：VAE `stabilityai/sd-vae-ft-ema` + DiT `DiT-XL-2-512x512`
    - 评测平台：`ssc-gpu` 队列中 1机4卡（NVIDIA V100 GPU (32GB)）
    - 最终得分分为两个部分：性能分 + 报告分，占比为性能占比 $80\%$ 报告占比为 $20\%$
    - 报告分：报告的具体评价标准请参考提交指南
    - 性能分：性能分得分请参考以下标准
-     - Baseline时间为500s (`batch_size` 大小为8的Baseline生成速度)
+     - Baseline时间为360s (`batch_size` 大小为8的Baseline生成速度)
      - 评分公式：
       $$
       \text{Score}(T) = \left\{
       \begin{aligned}
       &0 && \text{if } T \geq 360 \\
-      &50 \cdot \left( \frac{\log(\frac{360}{T})}{\log(\frac{360}{100})} \right) && \text{if } 100 \leq T < 360 \\
-      &50 && \text{if } T \leq 100 \\
+      &100 \cdot \left( \frac{\log(\frac{360}{T})}{\log(\frac{360}{60})} \right) && \text{if } 60 \leq T < 360 \\
+      &100 && \text{if } T \leq 60 \\
       \end{aligned}
       \right.
       $$
-     - 参考分数：
+
+## 提交指南
+
+### 代码提交「集群提交」
+
+请将至少包含了一下目录的DiT-SUSTC文件提交至对应的集群目录下：
+
+```shell
+.
+├── README.md
+├── diffusion
+│   ├── __init__.py
+│   ├── diffusion_utils.py
+│   ├── gaussian_diffusion.py
+│   ├── respace.py
+│   └── timestep_sampler.py
+├── evaluate.py
+├── models.py
+├── output # Only contains your final result
+│   ├── sample_0.png
+│   ├── sample_1.png
+│   ├── sample_2.png
+│   └── ...
+├── pretrained_models
+│   ├── DiT-XL-2-512x512.pt
+│   ├── download.py
+│   └── sd-vae-ft-ema
+├── requirements.txt
+├── sample.py
+└── sample_ddp.py
+```
+
+除此之外请包涵两个文档：
+1. **代码运行指南**：主要是相比Baseline是否添加的新增的库文件
+2. **优化说明**：简要指出主要的代码修改部分，以及尝试的优化方案
+   
+### 报告提交「邮件提交」
+
+**优化报告**：内容包括但不限于：
+  - 单卡 Baseline 结果
+  - 单卡 Profile 结果及性能瓶颈分析
+  - 单卡优化方案与结果（如更换更快的矩阵计算库，算子融合等）
+  - 多卡方案设计（基于 Ultra-Scale PlayBook，分析适合 DiT 的并行策略）
+  - 多卡优化结果（使用数据并行/模型并行/序列并行等方式）
+  - 关键优化点、创新性说明、遇到的问题与解决方法
   
-         | $T$（秒） | 计算公式                                                          | 得分        |
-         | ------ | ------------------------------------------------------------- | --------- |
-         | 400    | $T \geq 360$ → 0                                              | **0**     |
-         | 360    | $T = 360$ → 0                                                 | **0**     |
-         | 300    | $50 \cdot \frac{\log(360/300)}{\log(3.6)}$ ≈ $50 \cdot 0.222$ | **11.11** |
-         | 250    | $50 \cdot \frac{\log(360/250)}{\log(3.6)}$ ≈ $50 \cdot 0.379$ | **18.95** |
-         | 200    | $50 \cdot \frac{\log(360/200)}{\log(3.6)}$ ≈ $50 \cdot 0.564$ | **28.2**  |
-         | 150    | $50 \cdot \frac{\log(360/150)}{\log(3.6)}$ ≈ $50 \cdot 0.768$ | **38.4**  |
-         | 120    | $50 \cdot \frac{\log(360/120)}{\log(3.6)}$ ≈ $50 \cdot 0.909$ | **45.4**  |
-         | 100    | $T = 100$ → 50                                                | **50**    |
-         | 80     | $T < 100$ → 50                                                | **50**    |
-         | 60     | $T < 100$ → 50                                                | **50**    |
-
-
-
-6. **公平性与诚信**  
-   - 禁止抄袭、恶意利用漏洞、篡改评测流程等行为
-
-### 提交指南
-
-请按如下要求提交你的成果：
-
-1. **提交内容** 
-   - **代码文件**「集群提交」：包含所有实现优化的源代码，结构清晰，便于评测。
-   - **运行说明文档** 「集群提交」：详细说明环境配置、依赖安装、编译与运行步骤，确保他人可顺利复现你的结果。
-   - **优化报告**「邮件提交」：内容包括但不限于：
-     - 单卡 Baseline 结果
-     - 单卡 Profile 结果及性能瓶颈分析
-     - 单卡优化方案与结果（如更换更快的矩阵计算库，算子融合等）
-     - 多卡方案设计（基于 Ultra-Scale PlayBook，分析适合 DiT 的并行策略）
-     - 多卡优化结果（使用数据并行/模型并行/序列并行等方式）
-     - 关键优化点、创新性说明、遇到的问题与解决方法
-   - **结果文件**：需包含与报告第三部分和第五部分对应的实验结果数据或日志。
-2. **报告评分标准** 
+**报告评分标准** 
    
   | 内容                                                         | 比例   |
   |------------------------------------------------------------|-------|
