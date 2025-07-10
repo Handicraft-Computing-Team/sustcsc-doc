@@ -556,8 +556,8 @@ Terminated with exit code 137
 
 设
 
-* \$A\_{\text{ref},CL,i}\$：参考实现 (`CloverLeaf_ref`) 用编译器 \$CL\$ 在算例 \$i\$ 上的耗时；
-* \$A\_{\text{sub},CL,i}\$：选手提交（可为 *ref* 或 *Bonus CPU* 实现）用编译器 \$CL\$ 在算例 \$i\$ 上的耗时。
+* $A\_{\text{ref},CL,i}$：参考实现 (`CloverLeaf_ref`) 用编译器 $CL$ 在算例 $i$ 上的耗时；
+* $A\_{\text{sub},CL,i}$：选手提交（可为 *ref* 或 *Bonus CPU* 实现）用编译器 $CL$ 在算例 $i$ 上的耗时。
 
 每个 *(实现,编译器,算例)* 的得分为
 
@@ -565,9 +565,9 @@ $$
 M_{CL,i}=B\times\frac{A_{\text{ref},CL,i}}{A_{\text{sub},CL,i}},
 $$
 
-其中权重 \$B\$ 为
+其中权重 $B$ 为
 
-| 代码实现             | 编译器                          | \$B\$  |
+| 代码实现             | 编译器                          | $B$  |
 | ---------------- | ---------------------------- | ------ |
 | CloverLeaf\_ref  | GNU / Intel                  | **10** |
 | CloverLeaf\_ref  | 其他编译器（AOCC、Clang 等） | **4**  |
@@ -577,7 +577,7 @@ $$
 只允许提交一份 **Bonus CPU 实现**而且只计算一个编译器的分数，且必须在 `CloverLeaf_ref` 之外。若提交了多个 Bonus CPU 实现或者一个 Bonus CPU 实现但是多个编译器版本，则根据抓瞎法随机挑选一个实现的性能分。
 :::
 
-**总性能分** 为 ref 版本各编译器两个算例所得 \$M\_{CL,i}\$ 之和再加上 Bonus CPU 实现的得分。
+**总性能分** 为 ref 版本各编译器两个算例所得 $M_{CL,i}$ 之和再加上 Bonus CPU 实现的得分。
 如发现**违规、结果不可复现、输出被篡改或恶意利用 Bug**，该提交的所有性能分计 **0**。
 
 
