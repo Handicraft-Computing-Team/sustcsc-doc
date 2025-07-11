@@ -172,13 +172,14 @@ Diffusion扩散模型不仅仅在文生图任务中应用广泛，在目前工�
 #SBATCH --job-name=dit_inference
 #SBATCH --output=dit_inference.out
 #SBATCH --error=dit_inference.err
-#SBATCH --nodes=1 
-#SBATCH --ntasks-per-node=4
-#SBATCH --gres=gpu:4
+#SBATCH -N=1 
+#SBATCH -c=4
+#SBATCH --mem=128M
+#SBATCH --gres=gpu:v100:4
 #SBATCH --time=01:00:00
 #SBATCH --partition=8v100-32
 
-conda init
+source ~/.bashrc
 conda activate DiT
 cd /path/to/DiT-SUSTCSC
 python sample.py
