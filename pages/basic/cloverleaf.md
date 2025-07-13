@@ -341,23 +341,14 @@ function finalCleanup() {
 import { computed } from 'vue'
 
 /* —— 1. 终幕全文 —— */
-const endXRaw = `无星的远古夜，尘灰覆盖一座断顶石塔。
-塔内微火摇曳，守火的少女静坐如影，只记得一句誓言：
-“火在，天光可至。”
-
-忽有一瓣晶莹绿叶自黑暗飘落，轻触火舌。
-火光骤亮，一线幽蓝破墙而出，直指苍穹。
-少女将叶托回火心，轻声呢喃——音轻如祷。
-
-火回应祷词，化作光廊，穿透无尽黑夜。
-少女含笑阖眼，任身影随风淡去。
-而那片叶子，已在火中生根，等待下一个行路人。`.trim()
+const endXRaw = `已解锁隐藏内容`.trim()
 
 /* —— 2. 响应式变量 —— */
 const endXShow  = ref(false)          // 蒙版显隐
 const endXDone  = ref(false)          // 是否已播完
 const endXIdx   = ref(0)              // 当前渲染到第几字符
 let   endXTmr : number                // 定时器
+const unlocked = ref(false)
 
 /* —— 3. 计算属性 —— */
 const endXFullText     = endXRaw.replace(/\r/g,'')
@@ -368,6 +359,7 @@ const endXVisibleLines = computed(() => endXVisibleText.value.split('\n'))
 function endXLaunch(){
   if(endXShow.value) return
   endXShow.value = true
+  unlocked.value = true
   endXDone.value = false
   endXIdx.value  = 0
   endXTmr = window.setInterval(()=>{
@@ -2624,7 +2616,7 @@ Team 16:
 <ClientOnly>
 <div id="endX-root">
   <button class="endX-btn" @click="endXLaunch">
-    点亮命运的灯塔
+    接受 CloverLeaf 的一切
   </button>
 
   <transition name="endX-fade">
@@ -2634,6 +2626,16 @@ Team 16:
       </div>
     </div>
   </transition>
+</div>
+
+<div id="hidden" v-if="unlocked">
+
+## 尘封的故事：init()
+
+![](/images/hidden.png)
+
+<iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/472789149&color=%23ff5500&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe><div style="font-size: 10px; color: #cccccc;line-break: anywhere;word-break: normal;overflow: hidden;white-space: nowrap;text-overflow: ellipsis; font-family: Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif;font-weight: 100;"><a href="https://soundcloud.com/sakuzyo" title="Sakuzyo" target="_blank" style="color: #cccccc; text-decoration: none;">Sakuzyo</a> · <a href="https://soundcloud.com/sakuzyo/arcaea-fracture-ray" title="[Arcaea] Fracture Ray" target="_blank" style="color: #cccccc; text-decoration: none;">[Arcaea] Fracture Ray</a></div>
+
 </div>
 
 <style scoped>
@@ -2659,7 +2661,7 @@ Team 16:
 /* 蒙版 */
 .endX-overlay{
   position:fixed;inset:0;z-index:12000;
-  background:url('/images/ending-bg.jpg') center/cover no-repeat,#000;
+  background:url('/images/hikari.png') center/cover no-repeat,#000;
   background-blend-mode:multiply;
   display:flex;justify-content:center;align-items:center;
   cursor:pointer;overflow-y:auto;
