@@ -429,10 +429,17 @@ time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map
 我们会提供`namelist.input.bonus`，注意对于namelist.input里的参数，除了以下几个参数可以修改，其他参数严禁修改：
 
 ```shell
+&time_control
+ io_form_history = 2,
+ io_form_restart = 2,
+ io_form_input = 2,
+ io_form_boundary = 2,
+/
+
 &domains  
-  numtiles   = 1  
-  nproc_x    = -1  
-  nproc_y    = -1  
+  numtiles = 1, 
+  nproc_x = -1,  
+  nproc_y = -1, 
 /
 
 &namelist_quilt
