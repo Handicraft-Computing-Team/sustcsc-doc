@@ -87,7 +87,7 @@ const sortedAdv = computed(() =>
             <td>{{ row.C_CPP }}</td>
             <td>{{ row.Rust }}</td>
             <td>{{ row.CloverLeaf }}</td>
-            <td class="total">{{ row.total }}</td>
+            <td class="total">{{ row.total.toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
@@ -113,7 +113,7 @@ const sortedAdv = computed(() =>
             <td>{{ row.HGEMM }}</td>
             <td>{{ row.DiT }}</td>
             <td>{{ row.WRF }}</td>
-            <td class="total">{{ row.total }}</td>
+            <td class="total">{{ row.total.toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
