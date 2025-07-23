@@ -2708,6 +2708,30 @@ Team 16:
 
 不少队伍在以下细节上丢分：只贴最终数字却欠缺过程数据；在不同硬件上做对比却未声明；表格或图里的轴缺失单位；代码注释模糊，无法迅速看出改动点；报告写着 gcc 12，脚本实际调用 gcc 10；提前检查这些细节能避免低级失误。
 
+## 附录十八：学习资源参考
+
+### 混合 OpenMP/MPI 编程
+
+- [犹他大学 Hybrid MPI/OpenMP Programming 讲义](https://www.chpc.utah.edu/presentations/images-and-pdfs/MPI-OMP15.pdf)
+- [MPI+OpenMP 快速指南（Stony Brook Seawulf FAQ）](https://rci.stonybrook.edu/hpc/faqs/a-guide-to-using-openmp-and-mpi-on-seawulf)
+- [PRACE Hybrid CPU Programming with OpenMP and MPI](https://events.prace-ri.eu/event/1225/attachments/1632/3145/Lecture%20slides_Hybrid%20CPU%20programming%20with%20OpenMP%20and%20MPI%20%40%20CSC%20%28PTC%20%7C%20ONLINE%29%2C%204.10-5.10.2021.pdf)
+  - 非常详细的教程，如果有时间的话强烈推荐学习。
+- [POP Webinar: Identifying performance bottlenecks in hybrid MPI + OpenMP software](https://www.youtube.com/watch?v=pnDSNY43tkc)
+  - 介绍了一套基于跟踪数据的小集合指标的方法，说明如何判别常见瓶颈。
+- [SC13: Hybrid MPI/OpenMP Parallel Programming](https://www.openmp.org/wp-content/uploads/HybridPP_Slides.pdf)
+  - 非常详细的教程，涵盖高级混合并行优化技巧。
+
+
+### CloverLeaf 相关
+
+- [SC23 OpenMP Booth Talk: An evaluation of MPI+OpenMP on heterogeneous HPC systems](https://www.openmp.org/wp-content/uploads/sc23-mpi-openmp-heterogeneous-lin.pdf)
+  - 由布里斯托大学团队在 SC23 大会上发布的约20分钟报告[视频](https://www.youtube.com/watch?v=IVfdH0bGdLA)，分析了混合 MPI+OpenMP 并行在 CPU 和 GPU 平台上的性能表现，包含了 CloverLeaf 等基准应用的实例。
+- [CloverLeaf on Intel Multi-Core CPUs: A Case Study in Write-Allocate Evasion](https://arxiv.org/pdf/2311.04797)
+  - 对 CloverLeaf 在英特尔新款多核 CPU 上的异常性能现象进行剖析。
+- [CloverLeaf 多模型实现仓库](https://github.com/UoB-HPC/CloverLeaf)
+  - 包含 CloverLeaf 的多种并行编程模型实现。
+- [CloverLeaf: Preparing Hydrodynamics Codes for Exascale](https://cug.org/proceedings/cug2013_proceedings/includes/files/pap130.pdf)
+
 ---
 
 <img src="/images/hikari.png" />
