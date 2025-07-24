@@ -1093,8 +1093,8 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 
 | 算例 | GNU | Intel | AOCC | HPC-X\* | MVAPICH | MPICH | NVHPC |
 |:----------------:|:---:|:-----:|:----:|:-----:|:-------:|:-------:|:-----:|
-| 1 | 1033.1695 s | 519.8045 s | 1111.9942 s | 811.9700 s | 519.0863 s | 8881.1416 s | 818.3194 s |
-| 2 | 17.6088 s | 8.0040 s | 30.2586 s | 13.7310 s | 8.2421 s | 813.4592 s | 20.5116 s |
+| 1 | 1033.1695 s | 519.8045 s | 1111.9942 s | 811.9700 s | 519.0863 s | 409.9613 s | 818.3194 s |
+| 2 | 17.6088 s | 8.0040 s | 30.2586 s | 13.7310 s | 8.2421 s | 7.2842 s | 20.5116 s |
 
 ::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
 :::
@@ -1808,6 +1808,10 @@ fi
 
 ## 附录七：安装并使用 MPICH
 
+::: warning 重要更新
+2025/7/24：更新了 ./configure 的选项，增加了 `--with-device=ch4:ucx` 和 `--with-ucx=/usr` 等，以确保 MPICH 使用 UCX 作为通信协议。
+:::
+
 MPICH 是阿贡国家实验室 (Argonne National Laboratory) 发布的高性能、可广泛移植的 MPI-4.1 标准实现。此版本具备该标准所需的所有 MPI 4.1 功能和特性，但不支持用户定义的 I/O 数据表示，是很多研究 MPI 特性的基线。本次比赛中，MPICH 作为 bonus 可选做，基准分数为 4 分（而不是 10 分）。
 
 进入[官网](https://www.mpich.org/downloads/)，选择下载 mpich-4.3.1 (stable release)	。
@@ -1816,7 +1820,13 @@ MPICH 是阿贡国家实验室 (Argonne National Laboratory) 发布的高性能�
 wget https://www.mpich.org/static/downloads/4.3.1/mpich-4.3.1.tar.gz
 tar -xzf mpich-4.3.1.tar.gz
 cd mpich-4.3.1
-./configure --prefix=<你想安装到的目录>/mpich
+# 这里需要指定通信协议
+./configure --prefix=<你想安装到的目录>/mpich \
+            --with-device=ch4:ucx \
+            --with-ucx=/usr \
+            --enable-fast=all,O3 \
+            --enable-thread-cs=per-vci \
+            --enable-shared
 make -j$(nproc) && make install
 ```
 
@@ -1834,7 +1844,106 @@ export MANPATH=<你安装到的目录>/mpich/man:$MANPATH
 make COMPILER=GNU
 ```
 
-作业脚本不赘述。
+示例作业脚本如下（记得改路径）：
+
+::: details job.mpich.slurm
+```bash
+#!/bin/bash
+#SBATCH --partition=8175m
+#SBATCH --time=24:00:00
+#SBATCH --job-name=cloverleaf
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --ntasks=48            # 可以更改
+#SBATCH --ntasks-per-node=24   # 可以更改
+#SBATCH --cpus-per-task=2      # 可以更改
+
+# 注意：比赛环境为 2 节点，每节点 48 核
+# 这意味着，cpus-per-task 乘以 ntasks-per-node 小于或等于 48 就可以了
+# 这里有丰富的调参空间，欢迎尝试
+
+lscpu
+
+source ~/.bashrc
+
+export PATH=/work/ccse-xiaoyc/opt/mpich/bin:$PATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/opt/mpich/lib:$PATH
+export MANPATH=/work/ccse-xiaoyc/opt/mpich/man:$MANPATH
+export LD_LIBRARY_PATH=/work/ccse-xiaoyc/xqw/baomu/CloverLeaf_SCC:$LD_LIBRARY_PATH
+
+which mpicc
+which gcc
+which gfortran
+
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
+
+NP=${SLURM_NTASKS:-32}
+
+get_ke () {
+  grep -E '^[[:space:]]*step:' "$1" | tail -1 | \
+      awk '{printf "%.10e\n", $(NF-1)}'
+}
+get_wc () {
+  grep -E 'Wall[[:space:]]+clock' "$1" | tail -1 | awk '{print $(NF)}'
+}
+
+PASS_CNT=0
+FAIL_CNT=0
+declare -A WCTIMES
+
+printf "\n=== Correctness Check ===\n"
+printf "Num proc: %d\n\n" "$NP"
+
+CASES="{1..2}"
+for i in $(eval echo $CASES); do
+  printf "? Case %-2d : Simulating...\n" "$i"
+
+  cp "cases/case${i}/clover.in" clover.in
+  # Use Slurm-native launcher; mpirun also works if preferred
+  # srun --mpi=list
+  # srun --mpi=pmi_v3 -n "$NP" ./clover_leaf
+  # mpirun -n "$NP" ./clover_leaf
+  mpiexec -bind-to core -map-by socket -n "$NP" ./clover_leaf
+  mv clover.out "clover${i}.out"
+
+  ref_file="cases/case${i}/clover.out"
+  my_ke=$(get_ke "clover${i}.out")
+  ref_ke=$(get_ke "$ref_file")
+
+  rel_err=$(awk -v a="$my_ke" -v b="$ref_ke" 'BEGIN{print (a-b>0? a-b: b-a)/b}')
+  rel_pct=$(awk -v e="$rel_err" 'BEGIN{printf "%.4f", e*100}')
+
+  wc_time=$(get_wc "clover${i}.out")
+  WCTIMES[$i]=$wc_time
+
+  if awk -v e="$rel_err" 'BEGIN{exit !(e<=0.005)}'; then
+    printf "   ✔ Passed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    echo "   ⏱  Wall clock = ${wc_time}s"
+    ((PASS_CNT++))
+  else
+    printf "   ✘ Failed  (ref=%s, out=%s, eps=%s%%)\n" "$ref_ke" "$my_ke" "$rel_pct"
+    ((FAIL_CNT++))
+  fi
+  echo
+done
+
+printf "=== Summary ===\n"
+printf "Passed: %d, Failed: %d\n" "$PASS_CNT" "$FAIL_CNT"
+echo -e "\nWall clock per case:"
+for i in $(eval echo $CASES); do
+  printf "  Case %-2d : %s s\n" "$i" "${WCTIMES[$i]:-NA}"
+done
+
+if (( FAIL_CNT == 0 )); then
+  printf "✅ All cases passed within 0.5%% tolerance.\n"
+else
+  printf "⚠️  Some cases failed. Please investigate.\n"
+  exit 1
+fi
+```
+:::
 
 ## 附录八：安装并使用 NVIDIA HPC SDK
 
