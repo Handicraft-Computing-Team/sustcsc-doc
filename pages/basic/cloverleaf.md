@@ -2852,6 +2852,11 @@ Team 18:
 
 ## 附录十八：学习资源参考
 
+### 编译选项
+
+- [GNU编译器的编译选项](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+- [Intel编译器的编译选项](https://www.spec.org/accel2023/flags/Intel_compiler_flags.2025-01-15.html)
+
 ### 混合 OpenMP/MPI 编程
 
 - [犹他大学 Hybrid MPI/OpenMP Programming 讲义](https://www.chpc.utah.edu/presentations/images-and-pdfs/MPI-OMP15.pdf)
