@@ -455,3 +455,8 @@ time -p mpirun -machinefile $LSB_DJOB_HOSTFILE -np $real_np --bind-to core --map
 ```
 
 如果参赛队伍能成功在1小时之内完整模拟并获得结果（同时最后通过正确性验证），便可获得额外的20分奖励。**请注意，Bonus的成绩不参与打榜环节，这里我们也不提供用于正确性验证的参考结果，我们会在比赛结束后统一验证，请将Bonus任务中涉及的所有优化的过程和结果在最终报告中写明**。
+
+PS: 一些对于Bonus任务可能有帮助的参考链接：
+- 关于GNU编译器的编译优化选项：https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+- 关于Intel编译器的编译优化选项：https://www.spec.org/accel2023/flags/Intel_compiler_flags.2025-01-15.html
+- 有关WRF I/O优化：https://zhuanlan.zhihu.com/p/738206919
