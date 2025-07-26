@@ -1099,6 +1099,25 @@ hachimi深吸一口气，伸出手："那就别耽搁了，下一站——太平
 ::: warning \*：使用 NVIDIA HPC SDK 自带的 HPC-X 不算在 HPC-X 一栏中，而算在 NVHPC 一栏中。HPC-X 这一栏指的是独立发布、可单独下载的版本。
 :::
 
+::: details ???
+
+你发现了一只野生的 oiia 哈基米！
+
+![](/images/oiia.jpg)
+
+| 算例 | Intel |
+|:----:|:-----:|
+| 1 | 372.6201 s |
+| 2 | 5.0754 s |
+
+诶，为什么集群会突然变得这么快呢？不会是哈基米你在捣乱吧！
+
+算了，不想改表格了（累趴）。
+
+【哈基米】：Oiiai, oiiai Oiiai, oiiai Oiiai, oiiai Oiiai, oiiai. Oiiai, oiiai Oiiai, oiiai Oiiai, oiiai, oiiai...
+:::
+
+
 ## 附录二：安装并使用 AOCC 编译器
 
 ::: warning 警告
