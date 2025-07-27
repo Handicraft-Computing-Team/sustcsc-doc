@@ -1,8 +1,8 @@
 team_id,team,HGEMM,DiT,WRF
 4,PI的队,0,73.19,0
-11,NullPointerException,31,100,74.58
-12,干饭不用排队,49,72.62,100
-14,Horizon Hunt,0,73.77,80.84
+11,NullPointerException,31,100,78.27
+12,干饭不用排队,49,72.62,85.26
+14,Horizon Hunt,0,73.77,86.22
 15,我的男神他叫yc,0,75.88,0
 17,ConvergeError,0,0,0
-19,请赐予我H100,35,0,83.11
+19,请赐予我H100,35,0,90.74
