@@ -460,3 +460,5 @@ PS: 一些对于Bonus任务可能有帮助的参考链接：
 - 关于GNU编译器的编译优化选项：https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
 - 关于Intel编译器的编译优化选项：https://www.spec.org/accel2023/flags/Intel_compiler_flags.2025-01-15.html
 - 有关WRF I/O优化：https://zhuanlan.zhihu.com/p/738206919
+
+**7月27日新增：如果有队伍在WRF I/O上取得了一定的优化效果并且在报告中体现（例如绘制图表展示并说明优化流程），将获得10分加分（即使没能在1小时内跑完6小时的模拟量）**。
