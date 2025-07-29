@@ -211,10 +211,12 @@ $$
 ├── Cargo.lock
 ├── Cargo.toml    # 魔法配置文件 *
 ├── Dockerfile    # 可选，用于构建你的专属魔法环境 *
+├── bonus         # Bonus challenge
+│   ├── Cargo.toml
+│   └── src
+│       ├── solver.rs
+│       └── main.rs
 ├── src           # 你的咒语宝库
-│   ├── bonus     # 终极挑战的代码
-│   │   ├── Cargo.toml
-│   │   └── *.rs
 │   ├── client.rs # 客户端魔法 *
 │   ├── server.rs # 服务器魔法 *
 │   └── main.rs   # 神圣不可侵犯的评判之眼（我们会忽略你的版本）
