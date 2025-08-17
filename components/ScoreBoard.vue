@@ -19,7 +19,7 @@ onMounted(async () => {
     C_CPP:    +r.C_CPP      || 0,
     Rust:     +r.Rust       || 0,
     CloverLeaf: +r.CloverLeaf || 0,
-    total: (+r.C_CPP || 0) + (+r.Rust || 0) + (+r.CloverLeaf || 0),
+    total: +r.Total || 0,
   }))
 
   advanced_scores.value = Papa.parse(advanced_text, { header: true, skipEmptyLines: true }).data.map(r => ({
@@ -28,7 +28,7 @@ onMounted(async () => {
     HGEMM:    +r.HGEMM || 0,
     DiT:      +r.DiT   || 0,
     WRF:      +r.WRF   || 0,
-    total: (+r.HGEMM || 0) + (+r.DiT || 0) + (+r.WRF || 0),
+    total: +r.Total || 0,
   }))
 })
 
@@ -77,7 +77,7 @@ const sortedAdv = computed(() =>
       <table class="scoreboard-table">
         <thead>
           <tr>
-            <th>排名</th><th>队伍</th><th>C/CPP</th><th>Rust</th><th>CloverLeaf</th><th>小计</th>
+            <th>排名</th><th>队伍</th><th>C/CPP</th><th>Rust</th><th>CloverLeaf</th><th>最终总分</th>
           </tr>
         </thead>
         <tbody>
@@ -103,7 +103,7 @@ const sortedAdv = computed(() =>
       <table class="scoreboard-table">
         <thead>
           <tr>
-            <th>排名</th><th>队伍</th><th>HGEMM</th><th>DiT</th><th>WRF</th><th>小计</th>
+            <th>排名</th><th>队伍</th><th>HGEMM</th><th>DiT</th><th>WRF</th><th>最终总分</th>
           </tr>
         </thead>
         <tbody>
